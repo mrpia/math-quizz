@@ -1,3 +1,4 @@
+import { AUTHOR_LABEL, AUTHOR_URL, SUPPORT_URL } from '../config/site';
 import { releaseNotes } from '../domain/releaseNotes';
 import { useI18n } from '../i18n/I18nContext';
 import './InfoScreen.css';
@@ -32,7 +33,7 @@ export const InfoScreen = ({ version, onBack }: Props) => {
         </p>
         <p className="info__credit-line">
           {creditBefore}
-          <a href="https://mrpia.ch">mrpia.ch</a>
+          <a href={AUTHOR_URL}>{AUTHOR_LABEL}</a>
           {creditAfter}
         </p>
       </section>
@@ -42,7 +43,7 @@ export const InfoScreen = ({ version, onBack }: Props) => {
         <p className="info__coffee">
           {coffeeBefore}
           <a
-            href="https://buymeacoffee.com/mrpia"
+            href={SUPPORT_URL}
             target="_blank"
             rel="noopener noreferrer"
           >

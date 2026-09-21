@@ -7,6 +7,40 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `LICENSE` — MIT. The repository is going public, and without a licence file
+  the default is "all rights reserved": readers may look and fork on GitHub but
+  may not legally use, modify or redistribute the code.
+- `src/config/site.ts`, holding every URL that ties a build to one deployment
+  and one author (`SITE_URL`, `AUTHOR_URL`, `AUTHOR_LABEL`, `SUPPORT_URL`).
+  `AUTHOR_LABEL` is derived from `AUTHOR_URL` rather than written twice, so the
+  credit link's text cannot drift from its href.
+- `src/__tests__/siteConfig.test.ts` — a drift guard in the spirit of
+  `i18n.test.ts`: it globs every source file under `src/` and fails, naming the
+  file, if any of them hard-codes one of those hosts again.
+- README: a **Privacy** section stating the no-backend / no-analytics /
+  `localStorage`-only position up front (the app is for children, so it is the
+  first question a reader has), and a **Deploying a fork** table listing the
+  three files that carry this deployment's identity.
+
+### Changed
+- `BACKUP_SCHEMA_URL` is now built on `SITE_URL` instead of being a literal.
+  The `-v1` stays literal on purpose — bumping `BACKUP_FORMAT_VERSION` means
+  deliberately shipping a second schema file, not silently moving the URL.
+  `backup.test.ts` gained an assertion that the schema URL sits under
+  `SITE_URL`, alongside the existing `$id` pin.
+- `InfoScreen` reads the credit and support links from `src/config/site.ts`;
+  `infoScreen.test.ts` asserts against those constants rather than literals, so
+  the tests now guard consistency instead of pinning one person's domains.
+- `.gitignore` covers `.claude/settings.local.json` and `.claude/.cc-writes/`
+  itself, instead of relying on a contributor's global excludes.
+- README intro said "French UI"; the app has been trilingual since 0.5.0.
+- `vite` `^6.4.3` → `^8.3.0`, `@vitejs/plugin-react` `^4.3.4` → `^6.1.1`,
+  `jsdom` `^25.0.1` → `^30.1.0`. Together these take `pnpm audit` from 11
+  findings (7 high, 3 moderate, 1 low) to **zero** — the remainder were
+  transitive through jsdom's `ws`/`form-data`, Vite's `postcss`/`nanoid`, and
+  the plugin's `@babel/core` → `browserslist`.
+
 ### Fixed
 - **`pnpm build` failed on typecheck.** `vite.config.ts` used
   `/// <reference types="vitest" />` to graft the `test` key onto Vite's config
@@ -20,15 +54,11 @@ and the project uses [Semantic Versioning](https://semver.org/).
   Vite warns will break once `configLoader: 'native'` becomes the default. Now
   `import pkg from './package.json' with { type: 'json' }`.
 
-### Changed
-- `vite` `^6.4.3` → `^8.3.0`, `@vitejs/plugin-react` `^4.3.4` → `^6.1.1`,
-  `jsdom` `^25.0.1` → `^30.1.0`. Together these take `pnpm audit` from 11
-  findings (7 high, 3 moderate, 1 low) to **zero** — the remainder were
-  transitive through jsdom's `ws`/`form-data`, Vite's `postcss`/`nanoid`, and
-  the plugin's `@babel/core` → `browserslist`.
-
 Still on older majors, deliberately left for their own changes: React 18,
 TypeScript 5, vitest 4 (5 is out), `@testing-library/jest-dom` 6.
+
+No version bump: nothing here is user-visible, so `src/domain/releaseNotes.ts`
+is untouched.
 
 ## [0.12.0] - 2026-09-05
 

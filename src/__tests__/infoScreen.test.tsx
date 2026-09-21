@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
+import { AUTHOR_LABEL, AUTHOR_URL, SUPPORT_URL } from '../config/site';
 import { InfoScreen } from '../screens/InfoScreen';
 import { releaseNotes } from '../domain/releaseNotes';
 import { renderWithLanguage } from './renderWithLanguage';
@@ -29,8 +30,8 @@ describe('InfoScreen', () => {
   test('shows the Zürich credit line with the website as an inline link', () => {
     render(<InfoScreen version="9.9.9" onBack={() => {}} />);
     expect(screen.getByText(/Conçu avec.*à Zürich, Suisse/i)).toBeInTheDocument();
-    const link = screen.getByRole('link', { name: /mrpia\.ch/i });
-    expect(link).toHaveAttribute('href', 'https://mrpia.ch');
+    const link = screen.getByRole('link', { name: AUTHOR_LABEL });
+    expect(link).toHaveAttribute('href', AUTHOR_URL);
     // The {link} placeholder must be rendered as the link, never shown literally.
     expect(screen.queryByText(/\{link\}/)).toBeNull();
   });
@@ -38,7 +39,7 @@ describe('InfoScreen', () => {
   test('shows a Buy Me a Coffee link (coffee emoji, opens in a new tab)', () => {
     render(<InfoScreen version="9.9.9" onBack={() => {}} />);
     const coffee = screen.getByRole('link', { name: /☕/ });
-    expect(coffee).toHaveAttribute('href', 'https://buymeacoffee.com/mrpia');
+    expect(coffee).toHaveAttribute('href', SUPPORT_URL);
     expect(coffee).toHaveAttribute('target', '_blank');
   });
 
@@ -53,7 +54,7 @@ describe('InfoScreen', () => {
     expect(support.getByText(/dis-le à tes parents/i)).toBeInTheDocument();
     // The clickable phrase is the support action itself, inline in the sentence.
     const coffee = support.getByRole('link', { name: /m'offrir un café/i });
-    expect(coffee).toHaveAttribute('href', 'https://buymeacoffee.com/mrpia');
+    expect(coffee).toHaveAttribute('href', SUPPORT_URL);
   });
 
   test('surfaces support in a dedicated section', () => {

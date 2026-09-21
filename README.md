@@ -1,8 +1,36 @@
 # Math Quizz
 
 Timed mental-math drills (multiplication and division) for a child who already
-knows the tables and wants to automate recall. Single-page app, French UI,
-runs entirely in the browser, stores progress in `localStorage`.
+knows the tables and wants to automate recall. Single-page app, trilingual UI
+(FR/DE/EN), runs entirely in the browser, stores progress in `localStorage`.
+
+## Privacy
+
+**Nothing leaves the device.** This is an app for children, so the short
+version matters more than the long one:
+
+- **No backend, no accounts, no sign-in.** There is no server to send anything
+  to — the production build is a folder of static files.
+- **No analytics, no telemetry, no tracking, no cookies.** The bundle's only
+  runtime dependencies are `react` and `react-dom`, and it loads no font, script
+  or asset from a third-party host. The service worker re-fetches the app shell
+  from this site's own origin to pick up new versions — that is the only network
+  traffic the app generates, and it carries nothing about the user.
+- **All state is `localStorage`, per browser and per device.** Settings, session
+  history and the profile names a child types in stay in that one browser. They
+  do not sync, and they are not readable by anyone but whoever holds the device.
+- **A profile is a name and a storage prefix, not an identity** — no password,
+  no PIN, no recovery. That is the design, not a gap: the data is a child's
+  practice history on a family tablet, not something to protect from the family.
+- **The only way data moves** is the user pressing **Settings → Tes données →
+  Exporter**, which writes a JSON file wherever the browser's download dialog
+  says. Nothing is uploaded.
+
+The two outbound links in the app — the author credit and a "Buy me a coffee"
+link, both on the À propos screen — are ordinary `<a href>`s that do nothing
+until tapped. Adding any collection would be an explicit decision about what,
+where and with what consent; see "No telemetry, no analytics" in
+[`docs/roadmap.md`](docs/roadmap.md).
 
 ## Prerequisites
 
@@ -88,6 +116,21 @@ compression is automatic. `.firebaserc` pins the default project.
 > Custom domain DNS lives at the `mrpia.ch` registrar: the `math-quizz` host
 > points at Firebase Hosting via the record shown in the Firebase console →
 > Hosting. The Google-managed certificate renews automatically.
+
+### Deploying a fork
+
+Three files carry the identity of *this* deployment. Change them and nothing
+else points back here:
+
+| File | What to change |
+|---|---|
+| [`src/config/site.ts`](src/config/site.ts) | `SITE_URL`, `AUTHOR_URL`, `SUPPORT_URL` — the credit line, the support link, and the origin the backup schema URL is built on |
+| `.firebaserc` | your own Firebase project id (or delete it and host the `dist/` folder anywhere — Netlify, Vercel, GitHub Pages, any static server) |
+| `public/schemas/math-quizz-backup-v1.schema.json` | its `$id`, to match your new `SITE_URL` |
+
+`pnpm test` enforces the last two: `siteConfig.test.ts` fails if any file under
+`src/` hard-codes one of those hosts again, and `backup.test.ts` fails if the
+published schema's `$id` drifts from `BACKUP_SCHEMA_URL`.
 
 ## Project layout
 
@@ -196,3 +239,12 @@ See [`docs/roadmap.md`](docs/roadmap.md) for the backlog. Multiple named local
 profiles shipped in 0.12.0; the open items are adaptive weighting of the draw
 (item 2), fill-in-the-blank division (item 5), end-of-session sounds (item 6),
 voice mode (item 8) and merging on import (item 10).
+
+## License
+
+[MIT](LICENSE) © 2026 Pierre-Arnaud Galiana.
+
+Contributions are accepted under the same licence. The name "Math Quizz", the
+author credit and the support link are not part of the grant in any meaningful
+sense — they are just strings in [`src/config/site.ts`](src/config/site.ts), and
+a fork is expected to change them.

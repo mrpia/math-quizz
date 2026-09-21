@@ -22,6 +22,7 @@
 import { DEFAULT_SETTINGS, SETTINGS_BOUNDS } from './session';
 import type { AnswerMode, AnswerRecord, SessionResult, Settings } from './session';
 import type { Mode, Operator, Question } from './question';
+import { SITE_URL } from '../config/site';
 import { MULTIPLICANDS } from './tables';
 import { LANGUAGES } from '../i18n';
 import type { Language } from '../i18n/types';
@@ -32,9 +33,16 @@ export const BACKUP_FORMAT = 'math-quizz-backup';
 /** Version of the envelope, not of the app. Bumped only on a breaking change. */
 export const BACKUP_FORMAT_VERSION = 1;
 
-/** Where the published JSON Schema lives. Also written into every export. */
+/**
+ * Where the published JSON Schema lives. Also written into every export.
+ *
+ * Built on `SITE_URL` so a fork retargets it by editing src/config/site.ts.
+ * The `-v1` stays a literal on purpose: bumping `BACKUP_FORMAT_VERSION` means
+ * shipping a new schema file next to the old one, which is a deliberate act,
+ * not a string that should follow the constant automatically.
+ */
 export const BACKUP_SCHEMA_URL =
-  'https://math-quizz.mrpia.ch/schemas/math-quizz-backup-v1.schema.json';
+  `${SITE_URL}/schemas/math-quizz-backup-v1.schema.json`;
 
 /**
  * Lifetime per-pair counters, as written by versions up to 0.10.0.

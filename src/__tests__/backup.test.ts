@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import schemaRaw from '../../public/schemas/math-quizz-backup-v1.schema.json?raw';
+import { SITE_URL } from '../config/site';
 import {
   BACKUP_FORMAT,
   BACKUP_FORMAT_VERSION,
@@ -367,5 +368,11 @@ describe('the schema documents the profile fields', () => {
   it('stays at formatVersion 1 — profileName is additive', () => {
     expect(BACKUP_FORMAT_VERSION).toBe(1);
     expect(BACKUP_SCHEMA_URL).toContain('-v1.schema.json');
+  });
+
+  it('is served from the deployment this build belongs to', () => {
+    // The schema URL travels inside every export, so it must follow the site
+    // a fork retargets in src/config/site.ts — not a literal frozen here.
+    expect(BACKUP_SCHEMA_URL.startsWith(`${SITE_URL}/`)).toBe(true);
   });
 });

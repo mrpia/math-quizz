@@ -13,6 +13,12 @@ coverage
 .superpowers/
 .playwright-mcp/
 
+# Claude Code per-machine state. Ignored here rather than relying on a
+# contributor's global excludes — it holds local paths and permission
+# allowlists that are personal to one checkout.
+.claude/settings.local.json
+.claude/.cc-writes/
+
 # Firebase CLI
 .firebase/
 *-debug.log
