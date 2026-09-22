@@ -119,15 +119,6 @@
   font-size: 0.92rem;
 }
 
-.info__credit-line a {
-  color: var(--color-accent);
-  text-decoration: none;
-}
-
-.info__credit-line a:hover {
-  text-decoration: underline;
-}
-
 .info__coffee {
   margin: 0;
   font-size: 0.9rem;
@@ -135,12 +126,24 @@
   line-height: 1.45;
 }
 
-.info__coffee a {
+.info__source {
+  margin: 0;
+  color: var(--color-fg);
+  line-height: 1.45;
+}
+
+/* One rule for every inline link in the panels, rather than a third identical
+   copy of it. */
+.info__credit-line a,
+.info__coffee a,
+.info__source a {
   color: var(--color-accent);
   text-decoration: none;
 }
 
-.info__coffee a:hover {
+.info__credit-line a:hover,
+.info__coffee a:hover,
+.info__source a:hover {
   text-decoration: underline;
 }
 

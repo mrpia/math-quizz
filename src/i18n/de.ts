@@ -127,6 +127,10 @@ export const de: Record<TranslationKey, string> = {
   'info.supportTitle': 'Die App unterstützen',
   'info.coffee': 'Wenn dir die App gefällt, sag es deinen Eltern: Sie können {link}.',
   'info.coffeeLink': 'mir einen Kaffee spendieren ☕',
+  'info.sourceTitle': 'Quellcode',
+  'info.source':
+    'Der Code von Math Quizz ist offen: Alle können ihn lesen, nachprüfen, was die App wirklich macht, oder eine eigene Version daraus bauen. Er liegt auf {link}.',
+  'info.sourceLink': 'GitHub',
   'profiles.title': 'Profile',
   'profiles.hint':
     'Ein Profil pro Person: Jede und jeder behält eigene Einstellungen und eigene Ergebnisse. Es gibt kein Passwort — es geht nur darum, eure Punkte nicht zu vermischen.',

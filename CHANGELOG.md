@@ -5,7 +5,7 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0] - 2026-09-22
 
 ### Added
 - `LICENSE` — MIT. The repository is going public, and without a licence file
@@ -30,6 +30,18 @@ and the project uses [Semantic Versioning](https://semver.org/).
 - `packageManager: "pnpm@10.11.0"` in `package.json`, so CI and a local
   checkout resolve the same pnpm rather than pinning the version twice.
 - README: CI and licence badges.
+- **The À propos screen says the app is open source and links to the
+  repository.** A new "Code source" panel sits directly under "Tes données", so
+  the privacy claim on that screen is immediately followed by the means to
+  check it. The URL is a new `SOURCE_URL` in `src/config/site.ts`, and
+  `siteConfig.test.ts` guards it by *full URL* rather than by host, unlike the
+  other three: `github.com` belongs to every project there, so a host match
+  would flag an innocent issue link in a comment while still missing a fork
+  that hard-coded this repository's path. A fork should point `SOURCE_URL` at
+  its own repository — the panel promises a reader the code of the app they are
+  running, which upstream stops being once a fork diverges.
+- `info.sourceTitle` / `info.source` / `info.sourceLink` in all three
+  dictionaries.
 
 ### Changed
 - `BACKUP_SCHEMA_URL` is now built on `SITE_URL` instead of being a literal.
@@ -107,8 +119,13 @@ and the project uses [Semantic Versioning](https://semver.org/).
 Still on older majors, deliberately left for their own changes: TypeScript 5,
 vitest 4 (5 is out), `@testing-library/jest-dom` 6.
 
-No version bump: nothing here is user-visible, so `src/domain/releaseNotes.ts`
-is untouched.
+**Why 1.0.0 rather than 0.13.0.** Everything above is the work of making the
+project public — a licence, a CI pipeline, a config file holding the
+deployment's identity, and now an in-app link to the repository. The app has no
+public API for SemVer to describe, so the major is a statement about the
+project rather than a compatibility boundary: this is the version a stranger
+can read, fork and run. Note that the backup format versions independently —
+app 1.0.0 still exports `formatVersion: 1`, and the two numbers will diverge.
 
 ## [0.12.0] - 2026-09-05
 

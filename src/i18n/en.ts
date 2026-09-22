@@ -125,6 +125,10 @@ export const en: Record<TranslationKey, string> = {
   'info.supportTitle': 'Support the app',
   'info.coffee': 'If you like the app, tell your parents: they can choose to {link}.',
   'info.coffeeLink': 'buy me a coffee ☕',
+  'info.sourceTitle': 'Source code',
+  'info.source':
+    "Math Quizz's code is open: anyone can read it, check what the app really does, or build their own version from it. It lives on {link}.",
+  'info.sourceLink': 'GitHub',
   'profiles.title': 'Profiles',
   'profiles.hint':
     'One profile per person: everyone keeps their own settings and their own results. There is no password — it is only so your scores don\u2019t get mixed up.',

@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
-import { AUTHOR_LABEL, AUTHOR_URL, SUPPORT_URL } from '../config/site';
+import { AUTHOR_LABEL, AUTHOR_URL, SOURCE_URL, SUPPORT_URL } from '../config/site';
 import { InfoScreen } from '../screens/InfoScreen';
 import { releaseNotes } from '../domain/releaseNotes';
 import { renderWithLanguage } from './renderWithLanguage';
@@ -22,8 +22,16 @@ describe('InfoScreen', () => {
 
   test('explains where the user data is stored', () => {
     render(<InfoScreen version="9.9.9" onBack={() => {}} />);
+    // Scope to the data panel — release notes quote the UI copy they announce,
+    // so the same privacy wording also appears further down the page (1.0.0).
+    const panel = screen
+      .getByRole('heading', { name: /Tes données/i })
+      .closest('section');
+    expect(panel).not.toBeNull();
     expect(
-      screen.getByText(/cet appareil|ce navigateur|rien n'est envoyé/i),
+      within(panel as HTMLElement).getByText(
+        /cet appareil|ce navigateur|rien n'est envoyé/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -62,6 +70,29 @@ describe('InfoScreen', () => {
     expect(
       screen.getByRole('heading', { name: /Soutenir l'appli/i }),
     ).toBeInTheDocument();
+  });
+
+  test('links to the public source repository (open source, new tab)', () => {
+    render(<InfoScreen version="9.9.9" onBack={() => {}} />);
+    const panel = screen
+      .getByRole('heading', { name: /Code source/i })
+      .closest('section');
+    expect(panel).not.toBeNull();
+    const source = within(panel as HTMLElement);
+    const link = source.getByRole('link', { name: /GitHub/i });
+    expect(link).toHaveAttribute('href', SOURCE_URL);
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));
+    // The {link} placeholder must be rendered as the link, never shown literally.
+    expect(source.queryByText(/\{link\}/)).toBeNull();
+  });
+
+  test('says the code is open so the privacy claim can be checked', () => {
+    render(<InfoScreen version="9.9.9" onBack={() => {}} />);
+    const panel = screen
+      .getByRole('heading', { name: /Code source/i })
+      .closest('section');
+    expect(within(panel as HTMLElement).getByText(/ouvert/i)).toBeInTheDocument();
   });
 
   test('back button calls onBack', () => {
