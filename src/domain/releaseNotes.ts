@@ -21,6 +21,24 @@ export type ReleaseNote = {
 /** Newest first. */
 export const releaseNotes: ReleaseNote[] = [
   {
+    version: '1.0.0',
+    date: '2026-09-22',
+    changes: {
+      fr: [
+        "Math Quizz passe en version 1.0. Rien ne change dans le jeu : l'appli est simplement assez complète pour mériter un vrai numéro 1.",
+        "Dans « À propos », un nouveau lien mène au code de l'appli sur GitHub. Il est ouvert à tout le monde : si ça t'intéresse, tu peux aller voir comment Math Quizz est fabriqué — et vérifier toi-même que rien n'est envoyé sur Internet.",
+      ],
+      de: [
+        'Math Quizz ist jetzt Version 1.0. Am Spiel ändert sich nichts: Die App ist einfach vollständig genug für eine richtige Eins.',
+        'Unter « Über » führt ein neuer Link zum Code der App auf GitHub. Er ist für alle offen: Wenn es dich interessiert, kannst du nachschauen, wie Math Quizz gebaut ist — und selbst nachprüfen, dass nichts ins Internet gesendet wird.',
+      ],
+      en: [
+        'Math Quizz is now version 1.0. Nothing changes in the game: the app is simply complete enough to deserve a proper number one.',
+        'Under "About", a new link takes you to the app\'s code on GitHub. It is open to everyone: if you are curious, you can go and see how Math Quizz is built — and check for yourself that nothing is sent to the internet.',
+      ],
+    },
+  },
+  {
     version: '0.12.0',
     date: '2026-09-05',
     changes: {

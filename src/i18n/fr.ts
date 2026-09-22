@@ -125,6 +125,10 @@ export const fr = {
   'info.supportTitle': "Soutenir l'appli",
   'info.coffee': "Si l'appli te plaît, dis-le à tes parents : ils pourront choisir de {link}.",
   'info.coffeeLink': "m'offrir un café ☕",
+  'info.sourceTitle': 'Code source',
+  'info.source':
+    "Le code de Math Quizz est ouvert : n'importe qui peut le lire, vérifier ce que l'appli fait vraiment, ou en fabriquer sa propre version. Il est sur {link}.",
+  'info.sourceLink': 'GitHub',
   'profiles.title': 'Profils',
   'profiles.hint':
     "Un profil par personne : chacun garde ses réglages et ses résultats. Il n'y a pas de mot de passe — c'est juste pour ne pas mélanger vos scores.",

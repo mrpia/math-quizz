@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { AUTHOR_LABEL, AUTHOR_URL, SITE_URL, SUPPORT_URL } from '../config/site';
+import {
+  AUTHOR_LABEL,
+  AUTHOR_URL,
+  SITE_URL,
+  SOURCE_URL,
+  SUPPORT_URL,
+} from '../config/site';
 
 /**
  * The project is public and forkable. Every URL that says "this deployment
@@ -13,7 +19,7 @@ describe('site config', () => {
   });
 
   it('exposes absolute, scheme-qualified URLs with no trailing slash', () => {
-    for (const url of [SITE_URL, AUTHOR_URL, SUPPORT_URL]) {
+    for (const url of [SITE_URL, AUTHOR_URL, SOURCE_URL, SUPPORT_URL]) {
       expect(url).toMatch(/^https:\/\//);
       expect(url).not.toMatch(/\/$/);
     }
@@ -33,6 +39,14 @@ describe('no hard-coded identity outside src/config/site.ts', () => {
 
   const hosts = [SITE_URL, AUTHOR_URL, SUPPORT_URL].map((u) => new URL(u).host);
 
+  /**
+   * `SOURCE_URL` is matched whole, not by host: `github.com` belongs to every
+   * project there, so the host alone would flag an innocent issue link in a
+   * comment while still missing a fork that hard-codes *this* repository's
+   * path. The full URL is the thing that must not be copied.
+   */
+  const literals = [SOURCE_URL];
+
   it('finds the app sources (guard is actually looking at something)', () => {
     expect(Object.keys(sources).length).toBeGreaterThan(20);
   });
@@ -42,8 +56,8 @@ describe('no hard-coded identity outside src/config/site.ts', () => {
     for (const [path, code] of Object.entries(sources)) {
       if (path.endsWith('/config/site.ts')) continue;
       if (path.includes('/__tests__/')) continue;
-      for (const host of hosts) {
-        if (code.includes(host)) offenders.push(`${path} → ${host}`);
+      for (const needle of [...hosts, ...literals]) {
+        if (code.includes(needle)) offenders.push(`${path} → ${needle}`);
       }
     }
     expect(offenders).toEqual([]);

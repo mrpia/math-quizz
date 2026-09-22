@@ -1,4 +1,4 @@
-import { AUTHOR_LABEL, AUTHOR_URL, SUPPORT_URL } from '../config/site';
+import { AUTHOR_LABEL, AUTHOR_URL, SOURCE_URL, SUPPORT_URL } from '../config/site';
 import { releaseNotes } from '../domain/releaseNotes';
 import { useI18n } from '../i18n/I18nContext';
 import './InfoScreen.css';
@@ -12,6 +12,7 @@ export const InfoScreen = ({ version, onBack }: Props) => {
   const { t, lang } = useI18n();
   const [coffeeBefore, coffeeAfter] = t('info.coffee').split('{link}');
   const [creditBefore, creditAfter] = t('info.credit').split('{link}');
+  const [sourceBefore, sourceAfter] = t('info.source').split('{link}');
   return (
     <div className="info">
       <header className="info__header">
@@ -60,6 +61,21 @@ export const InfoScreen = ({ version, onBack }: Props) => {
         </p>
         <p className="info__data">
           {t('info.dataP2')}
+        </p>
+      </section>
+
+      <section className="info__panel">
+        <h3 className="info__panel-title">{t('info.sourceTitle')}</h3>
+        <p className="info__source">
+          {sourceBefore}
+          <a
+            href={SOURCE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t('info.sourceLink')}
+          </a>
+          {sourceAfter}
         </p>
       </section>
 
