@@ -5,6 +5,32 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **A deploy took up to an hour to reach a returning visitor.** `firebase.json`
+  set `Cache-Control` for `/assets/**`, `/sw.js` and the manifest but not for
+  the app shell, so `index.html` fell to Firebase's default `max-age=3600`. A
+  service worker's `fetch()` goes through the browser's ordinary HTTP cache, so
+  the network-first navigation route could be answered from that cache without
+  ever reaching the network — the worker never saw the new shell, and the new
+  shell is what names the new content-hashed bundle. `/` and `/index.html` are
+  now `no-cache`: stored, but revalidated before use. The ETag was already
+  being served, so a launch costs one conditional request answered 304 for a
+  0.72 kB document. Offline is unaffected — the worker keeps its own copy of
+  the shell in the Cache API, which ignores HTTP cache directives.
+
+  Known limitation: Hosting matches a `headers` glob against the **requested**
+  path, not the rewrite destination, so a deep path such as `/progress` still
+  gets the one-hour default on its way through `rewrites` to `/index.html`.
+  Harmless today — screens are `useState` in `App.tsx`, not routes, so `/` is
+  the only path anything requests. Adding a router means revisiting this, and a
+  blanket `**` rule is not the fix: it would collide with the `immutable` rule
+  on `/assets/**`.
+
+No version bump: nothing here changes the bundle, so `package.json` and
+`src/domain/releaseNotes.ts` are untouched.
+
 ## [1.0.0] - 2026-09-22
 
 ### Added
