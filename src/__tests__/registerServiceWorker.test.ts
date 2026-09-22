@@ -1,8 +1,13 @@
 import { registerServiceWorker } from '../sw/register';
 
 describe('registerServiceWorker', () => {
+  beforeEach(() => {
+    vi.stubEnv('PROD', true);
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
     // @ts-expect-error test cleanup of an optionally-defined property
     delete navigator.serviceWorker;
   });
@@ -13,7 +18,22 @@ describe('registerServiceWorker', () => {
     expect(addEventListener).not.toHaveBeenCalledWith('load', expect.any(Function));
   });
 
-  it('registers the worker on window load when supported', () => {
+  it('does not register a worker or a load handler in development', () => {
+    vi.stubEnv('PROD', false);
+    const register = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'serviceWorker', {
+      value: { register },
+      configurable: true,
+    });
+    const addEventListener = vi.spyOn(window, 'addEventListener').mockImplementation(() => {});
+
+    registerServiceWorker();
+
+    expect(addEventListener).not.toHaveBeenCalledWith('load', expect.any(Function));
+    expect(register).not.toHaveBeenCalled();
+  });
+
+  it('registers the worker on window load when supported in production', () => {
     const register = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'serviceWorker', {
       value: { register },
@@ -26,6 +46,7 @@ describe('registerServiceWorker', () => {
 
     registerServiceWorker();
     expect(loadHandlers).toHaveLength(1);
+    expect(register).not.toHaveBeenCalled();
 
     loadHandlers[0]();
     expect(register).toHaveBeenCalledWith(`${import.meta.env.BASE_URL}sw.js`);

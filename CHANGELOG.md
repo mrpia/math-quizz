@@ -92,6 +92,17 @@ and the project uses [Semantic Versioning](https://semver.org/).
 - `vite.config.ts` imported `./package.json` without an import attribute, which
   Vite warns will break once `configLoader: 'native'` becomes the default. Now
   `import pkg from './package.json' with { type: 'json' }`.
+- **The dev server registered the service worker.** `registerServiceWorker()`
+  had no environment guard, so `pnpm dev` installed the worker on `localhost`
+  and its cache-first branch served dev modules from cache. Vite's dev URLs
+  carry no content hash, so a cache hit there *is* stale — an entire sanity
+  pass of the React 19 upgrade (#8) ran against a cached 0.10.0 bundle, and
+  two of its apparent findings were only artefacts of that old code. The
+  function now returns early unless `import.meta.env.PROD`; the flag is
+  replaced at build time, so the check folds away and the production bundle
+  registers exactly as it did before. Offline behaviour is tested with
+  `pnpm build` then `pnpm preview`. Existing registrations are not removed —
+  the README says how to unregister one. (#9)
 
 Still on older majors, deliberately left for their own changes: TypeScript 5,
 vitest 4 (5 is out), `@testing-library/jest-dom` 6.

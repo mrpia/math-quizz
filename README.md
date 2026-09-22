@@ -65,6 +65,16 @@ Opens a Vite dev server (default `http://localhost:5173`) with hot module
 reload. Open the URL in any modern browser. Both the on-screen number pad and
 the physical keyboard (digits, `Backspace`, `Enter`) drive answers.
 
+The dev server does not register a service worker, so development assets are
+not cached for offline use. Test offline/PWA behaviour with `pnpm build` then
+`pnpm preview`, which serves a production build with the worker enabled on a
+different port (`4173`). Service worker scope is per origin, so the worker that
+`pnpm preview` installs can never take over the dev server on `5173`.
+
+If an older service worker is already controlling your localhost page, remove
+that site's worker in DevTools → Application → Service Workers → **Unregister**,
+then hard-reload. The production-only guard does not remove existing registrations.
+
 ## Test
 
 ```bash
