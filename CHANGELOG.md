@@ -115,6 +115,13 @@ and the project uses [Semantic Versioning](https://semver.org/).
   that setting is ever turned off, and makes the shared version visible in
   `package.json`. The range stays on 10, where all three peer ranges
   (`>=10 <11`, `^10.0.0`) overlap. The resolved version is unchanged at 10.4.1.
+- **Patch refresh, lockfile only**: `@testing-library/dom` 10.4.1 → 10.4.2,
+  `@testing-library/user-event` 14.6.1 → 14.6.7, `jsdom` 30.1.0 → 30.1.1. The
+  ranges in `package.json` are unchanged: their floors are deliberate, and the
+  lockfile is what pins. jsdom 30.1.1 takes two of its own dependencies up a
+  major (`html-encoding-sniffer` 6 → 7, `w3c-xmlserializer` 5 → 6). Neither new
+  version asks for more Node than `engines` already requires, and jsdom's own
+  `engines` is unchanged, so the floors derived from it still hold.
 - `test.include` in `vite.config.ts` is pinned to `src/**/*.{test,spec}.{ts,tsx}`.
   Vitest globs from the repo root by default and would otherwise collect
   `e2e/*.spec.ts` into `pnpm test`, where the Playwright specs cannot run.
