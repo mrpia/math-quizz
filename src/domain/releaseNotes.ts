@@ -21,6 +21,21 @@ export type ReleaseNote = {
 /** Newest first. */
 export const releaseNotes: ReleaseNote[] = [
   {
+    version: '1.1.0',
+    date: '2026-09-23',
+    changes: {
+      fr: [
+        "Nouveau dans les Paramètres : « Revoir plus souvent ce qui est difficile ». Les calculs où tu t'es trompé ces derniers temps reviennent plus souvent, et ceux que tu n'as encore jamais faits passent aussi un peu plus souvent. Tu choisis : Non, Un peu ou Beaucoup (Un peu est déjà activé).",
+      ],
+      de: [
+        'Neu in den Einstellungen: « Schwierige Rechnungen öfter üben ». Rechnungen, bei denen du dich in letzter Zeit vertan hast, kommen öfter dran, und solche, die du noch nie hattest, auch ein bisschen öfter. Du wählst: Nein, Etwas oder Viel (Etwas ist schon eingeschaltet).',
+      ],
+      en: [
+        'New in Settings: "Practise the tricky ones more often". Problems you got wrong lately come up more often, and ones you have never had come up a little more often too. You choose: No, A bit or A lot (A bit is already on).',
+      ],
+    },
+  },
+  {
     version: '1.0.0',
     date: '2026-09-22',
     changes: {

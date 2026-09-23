@@ -7,6 +7,8 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-23
+
 ### Added
 - **Adaptive question draw** (#14, roadmap item 2). Pairs the child has been
   getting wrong lately come up more often. Each pair in the pool weighs
@@ -199,10 +201,6 @@ and the project uses [Semantic Versioning](https://semver.org/).
   the only path anything requests. Adding a router means revisiting this, and a
   blanket `**` rule is not the fix: it would collide with the `immutable` rule
   on `/assets/**`.
-
-No version bump: nothing here changes what the child sees, so `package.json`
-and `src/domain/releaseNotes.ts` are untouched. The `data-testid` attributes do
-reach the bundle, but they are inert — no markup, styling or behaviour moves.
 
 ## [1.0.0] - 2026-09-22
 

@@ -43,8 +43,7 @@ opening a tab each time. Low cost (< 1h), big UX gain.
 
 ## 2. Adaptive weighting of draws
 
-**Status**: ✅ Done — merged after v1.0.0 ([#14](https://github.com/mrpia/math-quizz/issues/14)),
-ships in the next release. `generateQuestions(settings, stats?)` weights each
+**Status**: ✅ Done — shipped in v1.1.0 ([#14](https://github.com/mrpia/math-quizz/issues/14)). `generateQuestions(settings, stats?)` weights each
 pair by `1 + α × weightedErrorRate`, with α set in Settings (off / moderate /
 strong = 0 / 2 / 5, default moderate). The issue holds the original motivation.
 
