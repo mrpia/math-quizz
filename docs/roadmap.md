@@ -61,8 +61,14 @@ strong = 0 / 2 / 5, default moderate). The issue holds the original motivation.
   Additive to backup format v1, so `formatVersion` stays 1.
 - **Recency-weighted, never raw.** A test pins it: a pair with ten old
   failures and no recent ones draws like any other.
-- **Unpractised pairs weigh 1**, like mastered ones. With little history
-  nearly every weight is 1, so a new profile draws as before.
+- **Unpractised pairs get a small boost.** A pair with no history is drawn
+  as if its error rate were `UNPRACTISED_RATE` (0.25): above a mastered pair,
+  below one missed half the time — so a newly selected table gets its turn
+  without crowding out real trouble spots. A brand-new profile still draws
+  uniformly, since every pair is equally unknown. Bayesian shrinkage
+  (`(failures + U·k) / (attempts + k)`) was considered, since it would also
+  treat evidence from long ago as weak; it was rejected because it is a soft
+  minimum-attempts gate, which the next point rules out.
 - **Efraimidis–Spirakis sampling, then a shuffle.** No pair repeats while the
   pool covers `questionCount`; the shuffle stops the heaviest pairs from
   clustering at the start. Repeats beyond the pool are drawn weighted too.

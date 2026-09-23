@@ -38,7 +38,14 @@ export const adaptiveAlpha = (settings: Settings): number =>
   ADAPTIVE_ALPHA[settings.adaptiveDraw ?? 'moderate'];
 
 /**
- * Pairs never practised count as rate 0: the same weight as a mastered pair.
+ * Error rate assumed for a pair with no history: above a mastered pair, so
+ * untried pairs (a newly selected table, say) get their turn, but below one
+ * the child misses half the time. Low because the child already knows the
+ * tables — an unknown pair is more likely right than wrong.
+ */
+export const UNPRACTISED_RATE = 0.25;
+
+/**
  * Recency-weighted on purpose — raw counters would keep drilling a pair the
  * child fixed months ago (see "Statistics are recency-weighted" in CLAUDE.md).
  */
@@ -49,8 +56,8 @@ const pairWeight = (
   alpha: number,
 ): number => {
   const counters = stats?.[canonicalKey(a, b)];
-  const rate = counters ? (weightedErrorRate(counters) ?? 0) : 0;
-  return 1 + alpha * rate;
+  const rate = counters ? weightedErrorRate(counters) : null;
+  return 1 + alpha * (rate ?? UNPRACTISED_RATE);
 };
 
 /**

@@ -14,7 +14,11 @@ and the project uses [Semantic Versioning](https://semver.org/).
   progress screen ranks by, so a pair that has since been fixed stops being
   favoured. `generateQuestions(settings, stats?)` samples without replacement
   (Efraimidis–Spirakis), then shuffles so the heavy pairs don't cluster at the
-  start. With α = 0 or no history it reduces to the old uniform draw.
+  start. A pair with no history is weighted as if its error rate were
+  `UNPRACTISED_RATE` (0.25). That puts it above a mastered pair and below one
+  missed half the time, so a newly selected table gets its turn. With α = 0,
+  or on a fresh profile where every pair is equally unknown, the draw stays
+  uniform.
   `loadPairStats(profileId)` feeds it from the test and training histories
   merged by `startedAt`. The four session screens now take a `profileId` prop.
 - **Settings → "Revoir plus souvent ce qui est difficile"**, with three levels
