@@ -1,0 +1,17 @@
+# Version updates for GitHub Actions only. npm dependencies are upgraded by
+# hand, one PR per package, with the release notes read first; Dependabot's
+# security updates for npm are a repository setting and keep working without
+# an entry here.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    # Dependabot looks in .github/workflows/ under this directory.
+    directory: /
+    schedule:
+      interval: weekly
+    # ci.yml pins floating major tags (@v7), which move on every minor and
+    # patch release. So the only update this can open is a new major — the
+    # kind that needs its breaking changes checked against the workflow.
+    labels: [dependencies]
+    commit-message:
+      prefix: ci
