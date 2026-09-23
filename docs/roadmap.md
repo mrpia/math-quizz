@@ -43,11 +43,33 @@ opening a tab each time. Low cost (< 1h), big UX gain.
 
 ## 2. Adaptive weighting of draws
 
-**Status**: 📋 Planned — tracked as [#14](https://github.com/mrpia/math-quizz/issues/14).
+**Status**: ✅ Done — merged after v1.0.0 ([#14](https://github.com/mrpia/math-quizz/issues/14)),
+ships in the next release. `generateQuestions(settings, stats?)` weights each
+pair by `1 + α × weightedErrorRate`, with α set in Settings (off / moderate /
+strong = 0 / 2 / 5, default moderate). The issue holds the original motivation.
 
-The full write-up (motivation, what is needed, guardrails and the invariants not
-to break) moved to that issue, so there is one place to read and one place to
-update.
+**Decisions**:
+
+- **Tests and training feed one statistic.** `loadPairStats` merges both
+  histories by `startedAt` before `aggregatePairs`, so the decay runs over the
+  order sessions were actually played. A pair missed in a test is exactly what
+  training should bring back; feeding tests alone would give a child who only
+  trains no adaptation at all. The progress screen still shows the two apart.
+- **The stored setting names a level, not α.** `adaptiveDraw: 'off' |
+  'moderate' | 'strong'` keeps the curve retunable in one constant
+  (`ADAPTIVE_ALPHA`) without migrating anyone's saved settings or backups.
+  Additive to backup format v1, so `formatVersion` stays 1.
+- **Recency-weighted, never raw.** A test pins it: a pair with ten old
+  failures and no recent ones draws like any other.
+- **Unpractised pairs weigh 1**, like mastered ones. With little history
+  nearly every weight is 1, so a new profile draws as before.
+- **Efraimidis–Spirakis sampling, then a shuffle.** No pair repeats while the
+  pool covers `questionCount`; the shuffle stops the heaviest pairs from
+  clustering at the start. Repeats beyond the pool are drawn weighted too.
+- **No confidence gate.** One recent miss can raise a pair's weight to 1 + α.
+  For the draw that is the point — it re-asks, and one right answer halves the
+  rate. The progress screen keeps its `minAttempts` threshold, because
+  *showing* a pair as tricky is a judgement, and drawing it again is not.
 
 ---
 
@@ -290,8 +312,8 @@ a running total with no timestamps cannot be decayed.
   At half-life 10 the newest 50 carry >96% of all weight; a test asserts
   `HISTORY_LIMIT >= 5 * RECENCY_HALF_LIFE_SESSIONS`.
 
-**Follow-up**: item 2 (adaptive weighting of draws) now only needs the draw
-side — the statistic it wants already exists.
+**Follow-up**: item 2 (adaptive weighting of draws) built the draw side on
+this statistic.
 
 ---
 

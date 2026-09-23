@@ -33,7 +33,7 @@ const advance = (ms: number) =>
 describe('SessionScreen flow', () => {
   test('keyboard input + Enter → records correct answer', () => {
     let result: SessionResult | null = null;
-    render(<SessionScreen settings={settings} onComplete={(r) => (result = r)} />);
+    render(<SessionScreen profileId="default" settings={settings} onComplete={(r) => (result = r)} />);
 
     fireEvent.keyDown(window, { key: '5' });
     fireEvent.keyDown(window, { key: '6' });
@@ -54,7 +54,7 @@ describe('SessionScreen flow', () => {
 
   test('time past target does NOT auto-advance — child can take all the time they need', () => {
     let result: SessionResult | null = null;
-    render(<SessionScreen settings={settings} onComplete={(r) => (result = r)} />);
+    render(<SessionScreen profileId="default" settings={settings} onComplete={(r) => (result = r)} />);
 
     // Wait well past the target — nothing should happen on its own
     advance(15_000);
@@ -82,7 +82,7 @@ describe('SessionScreen flow', () => {
 
   test('records partialCreditFactor on the SessionResult for self-contained scoring', () => {
     let result: SessionResult | null = null;
-    render(<SessionScreen settings={settings} onComplete={(r) => (result = r)} />);
+    render(<SessionScreen profileId="default" settings={settings} onComplete={(r) => (result = r)} />);
 
     for (let i = 0; i < 3; i++) {
       fireEvent.keyDown(window, { key: '0' });
@@ -95,7 +95,7 @@ describe('SessionScreen flow', () => {
 
   test('NumPad clicks erase + validate work', () => {
     let result: SessionResult | null = null;
-    render(<SessionScreen settings={settings} onComplete={(r) => (result = r)} />);
+    render(<SessionScreen profileId="default" settings={settings} onComplete={(r) => (result = r)} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'chiffre 5' }));
     fireEvent.click(screen.getByRole('button', { name: 'chiffre 9' })); // 59
@@ -113,14 +113,14 @@ describe('SessionScreen flow', () => {
 
   test('cancel button hands control back to the caller', () => {
     const onCancel = vi.fn();
-    render(<SessionScreen settings={settings} onComplete={() => {}} onCancel={onCancel} />);
+    render(<SessionScreen profileId="default" settings={settings} onComplete={() => {}} onCancel={onCancel} />);
     fireEvent.click(screen.getByRole('button', { name: 'Arrêter' }));
     expect(onCancel).toHaveBeenCalledOnce();
   });
 
   test('empty answer + Enter is ignored (no advance)', () => {
     let result: SessionResult | null = null;
-    render(<SessionScreen settings={settings} onComplete={(r) => (result = r)} />);
+    render(<SessionScreen profileId="default" settings={settings} onComplete={(r) => (result = r)} />);
 
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(screen.getByText('Question 1 / 3')).toBeInTheDocument();

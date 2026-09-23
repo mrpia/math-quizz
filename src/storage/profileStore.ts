@@ -1,6 +1,8 @@
 import { DEFAULT_SETTINGS } from '../domain/session';
 import type { Settings, SessionResult } from '../domain/session';
 import { createBackup } from '../domain/backup';
+import { aggregatePairs, chronological } from '../domain/stats';
+import type { PairCounterMap } from '../domain/stats';
 import type { Backup } from '../domain/backup';
 
 /**
@@ -90,6 +92,15 @@ export const recordTrainingSession = (
     JSON.stringify(next),
   );
 };
+
+/**
+ * What the question draw leans on: every pair this profile has practised,
+ * tests and training together, decayed in the order they were played. A pair
+ * missed in a test should come back in training, and the other way round.
+ * Recomputed on every call — a cached total could not be decayed.
+ */
+export const loadPairStats = (profileId: string): PairCounterMap =>
+  aggregatePairs(chronological(loadHistory(profileId), loadTrainingHistory(profileId)));
 
 /**
  * Everything this profile owns, wrapped in the published backup envelope.

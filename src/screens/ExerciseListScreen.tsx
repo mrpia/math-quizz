@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { loadPairStats } from '../storage/profileStore';
 import { generateQuestions, formatOperation } from '../domain/question';
 import type { Question } from '../domain/question';
 import type { Settings } from '../domain/session';
@@ -6,17 +7,19 @@ import { useI18n } from '../i18n/I18nContext';
 import './ExerciseListScreen.css';
 
 type Props = {
+  /** Whose history biases the draw. */
+  profileId: string;
   settings: Settings;
   /** Return to the caller (home). The list never completes a session. */
   onCancel: () => void;
 };
 
-export const ExerciseListScreen = ({ settings, onCancel }: Props) => {
+export const ExerciseListScreen = ({ profileId, settings, onCancel }: Props) => {
   const { t } = useI18n();
   const [seed, setSeed] = useState(0);
   const questions = useMemo<Question[]>(
-    () => generateQuestions(settings),
-    [settings, seed],
+    () => generateQuestions(settings, loadPairStats(profileId)),
+    [settings, profileId, seed],
   );
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
 

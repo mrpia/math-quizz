@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { loadPairStats } from '../storage/profileStore';
 import { generateQuestions } from '../domain/question';
 import type { Question } from '../domain/question';
 import type { AnswerRecord, Settings, SessionResult } from '../domain/session';
@@ -10,6 +11,8 @@ import { useI18n } from '../i18n/I18nContext';
 import './TrainingScreen.css';
 
 type Props = {
+  /** Whose history biases the draw. */
+  profileId: string;
   settings: Settings;
   onComplete: (result: SessionResult) => void;
   /** Abandon the session and return to the caller (e.g. home). */
@@ -19,9 +22,12 @@ type Props = {
 type Phase = 'answering' | 'feedback';
 type Feedback = { correct: boolean; given: number; expected: number };
 
-export const TrainingScreen = ({ settings, onComplete, onCancel }: Props) => {
+export const TrainingScreen = ({ profileId, settings, onComplete, onCancel }: Props) => {
   const { t } = useI18n();
-  const questions = useMemo<Question[]>(() => generateQuestions(settings), [settings]);
+  const questions = useMemo<Question[]>(
+    () => generateQuestions(settings, loadPairStats(profileId)),
+    [settings, profileId],
+  );
   const [index, setIndex] = useState(0);
   const [given, setGiven] = useState('');
   const [phase, setPhase] = useState<Phase>('answering');

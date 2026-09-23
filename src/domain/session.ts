@@ -3,6 +3,9 @@ import type { Language } from '../i18n/types';
 
 export type AnswerMode = 'screen' | 'paper' | 'training' | 'list';
 
+/** How hard the question draw leans toward pairs the child gets wrong. */
+export type AdaptiveDraw = 'off' | 'moderate' | 'strong';
+
 export type AnswerRecord = {
   question: Question;
   given: number | null;
@@ -38,6 +41,8 @@ export type Settings = {
   answerMode?: AnswerMode;
   /** UI language. Absent reads as 'fr'. */
   language: Language;
+  /** Bias of the draw toward shaky pairs. Absent reads as 'moderate'. */
+  adaptiveDraw?: AdaptiveDraw;
 };
 
 /**
@@ -59,4 +64,5 @@ export const DEFAULT_SETTINGS: Settings = {
   partialCreditFactor: 0.5,
   answerMode: 'screen',
   language: 'fr',
+  adaptiveDraw: 'moderate',
 };

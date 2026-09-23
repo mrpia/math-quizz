@@ -135,23 +135,27 @@ export const App = () => {
         {screen === 'session' &&
           (settings.answerMode === 'list' ? (
             <ExerciseListScreen
+              profileId={activeId}
               settings={settings}
               onCancel={() => setScreen('home')}
             />
           ) : settings.answerMode === 'paper' ? (
             <PaperSessionScreen
+              profileId={activeId}
               settings={settings}
               onComplete={handleSessionComplete}
               onCancel={() => setScreen('home')}
             />
           ) : settings.answerMode === 'training' ? (
             <TrainingScreen
+              profileId={activeId}
               settings={settings}
               onComplete={handleSessionComplete}
               onCancel={() => setScreen('home')}
             />
           ) : (
             <SessionScreen
+              profileId={activeId}
               settings={settings}
               onComplete={handleSessionComplete}
               onCancel={() => setScreen('home')}

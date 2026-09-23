@@ -98,6 +98,10 @@
         "language": {
           "description": "UI language.",
           "enum": ["fr", "de", "en"]
+        },
+        "adaptiveDraw": {
+          "description": "How strongly the question draw favours pairs the child has recently been getting wrong: 'off' (every pair equally likely), 'moderate' or 'strong'. Absent in files written before the field existed — read an absent value as 'moderate'.",
+          "enum": ["off", "moderate", "strong"]
         }
       }
     },

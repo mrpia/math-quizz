@@ -8,6 +8,20 @@ and the project uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Adaptive question draw** (#14, roadmap item 2). Pairs the child has been
+  getting wrong lately come up more often. Each pair in the pool weighs
+  `1 + α × weightedErrorRate`. That is the same recency-weighted rate the
+  progress screen ranks by, so a pair that has since been fixed stops being
+  favoured. `generateQuestions(settings, stats?)` samples without replacement
+  (Efraimidis–Spirakis), then shuffles so the heavy pairs don't cluster at the
+  start. With α = 0 or no history it reduces to the old uniform draw.
+  `loadPairStats(profileId)` feeds it from the test and training histories
+  merged by `startedAt`. The four session screens now take a `profileId` prop.
+- **Settings → "Revoir plus souvent ce qui est difficile"**, with three levels
+  stored as `settings.adaptiveDraw: 'off' | 'moderate' | 'strong'` (α = 0 / 2
+  / 5, default `moderate`). Added to the backup schema as an optional,
+  sanitised field. The change is additive, so `formatVersion` stays 1, and
+  older files read as `moderate`.
 - **CI tests Node 22 and 24** (#13). `verify` is now a matrix, one leg per LTS
   line. Both lines passed `install --frozen-lockfile`, `test` and `build`
   locally (22.23.2, 24.21.0) before the matrix went in. `e2e` stays on 22,

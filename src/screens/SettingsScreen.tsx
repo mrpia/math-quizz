@@ -14,6 +14,7 @@ import { downloadTextFile, readTextFile } from '../storage/fileTransfer';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/types';
 import { LanguageToggle } from '../components/LanguageToggle';
+import { AdaptiveDrawToggle } from '../components/AdaptiveDrawToggle';
 import { ProfileManager } from '../components/ProfileManager';
 import { findProfile, profileLabel } from '../storage/profileRegistry';
 import type { ProfileRegistry } from '../storage/profileRegistry';
@@ -207,6 +208,15 @@ export const SettingsScreen = ({
         />
         <span className="settings__hint">{t('settings.partialCreditHint')}</span>
       </label>
+
+      <div className="settings__field">
+        <span className="settings__label">{t('settings.adaptiveDraw')}</span>
+        <AdaptiveDrawToggle
+          value={settings.adaptiveDraw ?? 'moderate'}
+          onChange={(adaptiveDraw) => onSave({ ...settings, adaptiveDraw })}
+        />
+        <span className="settings__hint">{t('settings.adaptiveDrawHint')}</span>
+      </div>
 
       <div className="settings__field">
         <span className="settings__label">{t('settings.language')}</span>

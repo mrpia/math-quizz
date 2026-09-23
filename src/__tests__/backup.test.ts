@@ -233,6 +233,13 @@ describe('validateBackup — settings are sanitized, not rejected', () => {
     expect(s.answerMode).toBe(DEFAULT_SETTINGS.answerMode);
   });
 
+  it('falls back to the default for an unknown adaptiveDraw', () => {
+    expect(withSettings({ adaptiveDraw: 'maximum' }).adaptiveDraw).toBe(
+      DEFAULT_SETTINGS.adaptiveDraw,
+    );
+    expect(withSettings({ adaptiveDraw: 'strong' }).adaptiveDraw).toBe('strong');
+  });
+
   it('never lets selectedTables end up empty (generateQuestions throws on empty)', () => {
     expect(withSettings({ selectedTables: [] }).selectedTables).toEqual(
       DEFAULT_SETTINGS.selectedTables,

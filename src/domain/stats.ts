@@ -102,3 +102,13 @@ export const weightedErrorRate = (counters: PairCounters): number | null =>
   counters.weightedAttempts === 0
     ? null
     : counters.weightedFailures / counters.weightedAttempts;
+
+/**
+ * Several histories folded into one, oldest first, so `aggregatePairs` can
+ * decay them as a single sequence. Sessions are ordered by `startedAt` (ISO
+ * strings, so they sort as text); ties keep their stored order.
+ */
+export const chronological = (...histories: SessionResult[][]): SessionResult[] =>
+  histories
+    .flat()
+    .sort((x, y) => (x.startedAt < y.startedAt ? -1 : x.startedAt > y.startedAt ? 1 : 0));

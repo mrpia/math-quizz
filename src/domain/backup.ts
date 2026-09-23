@@ -20,7 +20,7 @@
  *   never end up empty: `generateQuestions` throws on an empty selection.
  */
 import { DEFAULT_SETTINGS, SETTINGS_BOUNDS } from './session';
-import type { AnswerMode, AnswerRecord, SessionResult, Settings } from './session';
+import type { AdaptiveDraw, AnswerMode, AnswerRecord, SessionResult, Settings } from './session';
 import type { Mode, Operator, Question } from './question';
 import { SITE_URL } from '../config/site';
 import { MULTIPLICANDS } from './tables';
@@ -124,6 +124,11 @@ const ANSWER_MODES: readonly string[] = [
   'list',
 ] satisfies AnswerMode[];
 const TABLES: readonly number[] = MULTIPLICANDS;
+const ADAPTIVE_DRAWS: readonly string[] = [
+  'off',
+  'moderate',
+  'strong',
+] satisfies AdaptiveDraw[];
 const LANGUAGE_CODES: readonly string[] = LANGUAGES.map((entry) => entry.code);
 
 /** '<low>x<high>', the canonical pair key produced by `stats.canonicalKey`. */
@@ -243,6 +248,11 @@ const sanitizeSettings = (value: unknown): Settings => {
       raw.language,
       LANGUAGE_CODES,
       DEFAULT_SETTINGS.language,
+    ),
+    adaptiveDraw: readEnum<AdaptiveDraw>(
+      raw.adaptiveDraw,
+      ADAPTIVE_DRAWS,
+      DEFAULT_SETTINGS.adaptiveDraw ?? 'moderate',
     ),
   };
 };

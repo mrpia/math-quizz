@@ -5,6 +5,7 @@ import {
   recencyWeight,
   weightedErrorRate,
   RECENCY_HALF_LIFE_SESSIONS,
+  chronological,
 } from '../domain/stats';
 import { HISTORY_LIMIT } from '../storage/profileStore';
 import type { SessionResult } from '../domain/session';
@@ -181,5 +182,28 @@ describe('aggregatePairs — recency weighting', () => {
     ]);
     expect(stats['3x4'].weightedFailures).toBeCloseTo(1);
     expect(weightedErrorRate(stats['3x4'])).toBeCloseTo(0.5);
+  });
+});
+
+describe('chronological', () => {
+  const at = (iso: string, tag: number): SessionResult => ({
+    ...mkSession([]),
+    startedAt: iso,
+    questionCount: tag,
+  });
+
+  test('interleaves several histories by startedAt, oldest first', () => {
+    const tests = [at('2026-05-01T08:00:00Z', 1), at('2026-05-03T08:00:00Z', 3)];
+    const training = [at('2026-05-02T08:00:00Z', 2), at('2026-05-04T08:00:00Z', 4)];
+    expect(chronological(tests, training).map((s) => s.questionCount)).toEqual([
+      1, 2, 3, 4,
+    ]);
+  });
+
+  test('keeps the stored order for sessions that started at the same instant', () => {
+    const same = '2026-05-01T08:00:00Z';
+    expect(
+      chronological([at(same, 1), at(same, 2)], [at(same, 3)]).map((s) => s.questionCount),
+    ).toEqual([1, 2, 3]);
   });
 });
