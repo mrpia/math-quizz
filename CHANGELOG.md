@@ -122,6 +122,14 @@ and the project uses [Semantic Versioning](https://semver.org/).
   major (`html-encoding-sniffer` 6 → 7, `w3c-xmlserializer` 5 → 6). Neither new
   version asks for more Node than `engines` already requires, and jsdom's own
   `engines` is unchanged, so the floors derived from it still hold.
+- **CI actions on their current majors**: `actions/checkout` 4 → 7,
+  `actions/setup-node` 4 → 7, `actions/cache` 4 → 6, `actions/upload-artifact`
+  4 → 7, `pnpm/action-setup` 4 → 6. The v4 tags target Node 20, and every run
+  warned that the runner was forcing checkout, setup-node and action-setup onto
+  Node 24 anyway. None of the breaking changes on the way apply here: the
+  runner-version floors only bind self-hosted runners, the workflow runs no git
+  commands and has no `pull_request_target` trigger, both setup-node steps set
+  `cache: pnpm` explicitly, and the report upload keeps the default zip.
 - `test.include` in `vite.config.ts` is pinned to `src/**/*.{test,spec}.{ts,tsx}`.
   Vitest globs from the repo root by default and would otherwise collect
   `e2e/*.spec.ts` into `pnpm test`, where the Playwright specs cannot run.

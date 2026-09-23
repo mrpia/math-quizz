@@ -32,15 +32,15 @@ jobs:
         node: [22, 24]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Reads the pnpm version from package.json's `packageManager` field,
       # so CI and a local checkout cannot drift.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
       # A bare major resolves to its latest release, which is what a
       # contributor installing that line today would get.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: pnpm
@@ -80,13 +80,13 @@ jobs:
     # other behind a skipped job.
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
       # Not in the matrix: Node only builds the bundle and serves it here, and
       # `verify` already builds on every line. The browser is what this job tests.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -97,7 +97,7 @@ jobs:
       # and those are the slow part — a Chromium download is larger than every
       # dependency in this repo put together. Keyed on the lockfile, so a
       # Playwright bump fetches the matching build instead of reusing the old one.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -117,7 +117,7 @@ jobs:
       - run: pnpm test:e2e
 
       # The only way to read a failure that did not reproduce locally.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
