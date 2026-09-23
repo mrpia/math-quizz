@@ -7,6 +7,67 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **An end-to-end suite that runs the built bundle in a real browser**
+  (`e2e/`, `playwright.config.ts`, `pnpm test:e2e`). Everything the project
+  tested until now ran source modules under jsdom, which has no service worker,
+  no Cache Storage, no navigation and no second page load — so neither of the
+  last two production problems was reachable from `pnpm test` even in
+  principle. `registerServiceWorker.test.ts` marks the ceiling: it stubs
+  `navigator.serviceWorker` and asserts `register` was called, which is as far
+  as jsdom goes.
+
+  Five specs, chosen by one rule — if a test can be written in Vitest it stays
+  in Vitest:
+  - `offline.spec.ts` — the worker installs, fills its cache and serves the app
+    with the network cut; and a launch while online still prefers the network
+    over a cached shell. Both run against `public/sw.js`, the hand-written copy
+    of the routing logic that ships and that nothing tested before —
+    `swCacheStrategy.test.ts` covers its TypeScript twin, not the file the
+    browser installs.
+  - `backup.spec.ts` — export, save the real download to disk, feed the same
+    bytes back through `setInputFiles`, restore. The only way to find out
+    whether what `downloadTextFile` writes is something `readTextFile` and
+    `parseBackup` can still read.
+  - `profiles.spec.ts` — switch profile, reload the page, and check both that
+    the right child came back and that the other child's stored settings were
+    not touched. That is the invariant `App.tsx` holds `{ registry, settings }`
+    as one state value for, and nothing tested it after an actual page load.
+  - `bundle.spec.ts` — the served site's version matches `package.json` (#9 was
+    caught by eye), and the manifest, its icons and the relative asset paths
+    are really served rather than merely present on disk.
+  - `session.spec.ts` — the on-screen pad and a physical keyboard on a
+    tablet-sized viewport, with the timer running on a real clock.
+
+  Flakiness was the design constraint, not effort: `main` requires CI and
+  cannot be self-approved, so a flaky check blocks the only person who can
+  merge. Hence web-first assertions throughout and no `waitForTimeout`,
+  `retries: 2` and `forbidOnly` on CI, Chromium only, and a standing rule that
+  a spec which goes flaky twice gets deleted rather than nursed.
+- `data-testid` attributes on the elements those specs address, and the
+  selector convention behind them written down in `README.md` and `CLAUDE.md`.
+  Every visible string and nearly every `aria-label` here is translated and the
+  language is a per-profile setting, so a role+name locator would assert the
+  French dictionary as a side effect of finding a button. Test ids give stable
+  identity across FR/DE/EN; `i18n.test.ts` and `languageSwitch.test.tsx` remain
+  the right layer for the names themselves.
+- A separate `e2e` CI job, deliberately not `needs: verify`, so a browser
+  failure and a unit failure stay separate news. It caches
+  `~/.cache/ms-playwright` keyed on the lockfile — `actions/setup-node`'s pnpm
+  cache does not cover browser binaries, and the Chromium download is larger
+  than every dependency in this repo put together — and uploads the Playwright
+  report as an artefact, which is the only way to read a CI-only failure.
+- `tsconfig.e2e.json`, so the E2E tree is type-checked (by `pnpm test:e2e`)
+  without `@types/node` entering the program that compiles `src/`, where
+  `process` compiling would turn a caught mistake into a runtime crash.
+
+### Changed
+- `test.include` in `vite.config.ts` is pinned to `src/**/*.{test,spec}.{ts,tsx}`.
+  Vitest globs from the repo root by default and would otherwise collect
+  `e2e/*.spec.ts` into `pnpm test`, where the Playwright specs cannot run.
+  Pinning holds for whatever a contributor later drops in the root; renaming
+  the files would only have protected the ones someone remembered to rename.
+
 ### Fixed
 - **A deploy took up to an hour to reach a returning visitor.** `firebase.json`
   set `Cache-Control` for `/assets/**`, `/sw.js` and the manifest but not for
@@ -28,8 +89,9 @@ and the project uses [Semantic Versioning](https://semver.org/).
   blanket `**` rule is not the fix: it would collide with the `immutable` rule
   on `/assets/**`.
 
-No version bump: nothing here changes the bundle, so `package.json` and
-`src/domain/releaseNotes.ts` are untouched.
+No version bump: nothing here changes what the child sees, so `package.json`
+and `src/domain/releaseNotes.ts` are untouched. The `data-testid` attributes do
+reach the bundle, but they are inert — no markup, styling or behaviour moves.
 
 ## [1.0.0] - 2026-09-22
 

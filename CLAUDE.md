@@ -9,6 +9,7 @@ division drills for a child who already knows the tables. Trilingual UI
 
 - `pnpm dev` — local dev server (Vite)
 - `pnpm test` — run the vitest suite once (`pnpm test:watch` to watch)
+- `pnpm test:e2e` — Playwright (Chromium) against a fresh production build
 - `pnpm build` — typecheck (`tsc --noEmit`) then production build
 
 ## Releasing — keep three things in sync
@@ -137,6 +138,27 @@ Static bundle on **Firebase Hosting** (GCP project `modern-ally-102412`), live a
 --only hosting`). See `README.md` and
 `docs/superpowers/specs/2026-06-13-firebase-hosting-design.md`.
 
+## Two suites, and the line between them
+
+**If a test can be written in Vitest, it stays in Vitest.** `pnpm test` is the
+fast suite — source modules under jsdom, `src/__tests__/`. `pnpm test:e2e` runs
+Chromium against `dist/` behind `vite preview`, and exists only for what jsdom
+cannot reach: the service worker and Cache Storage, a real page reload, the
+download and file-picker flows, and an unfaked clock. Five specs in `e2e/`;
+adding a sixth means first showing the thing is out of jsdom's reach.
+
+Two mechanics worth knowing before touching either:
+
+- `test.include` in `vite.config.ts` is pinned to `src/`. Vitest's default glob
+  matches from the repo root and would otherwise sweep `e2e/*.spec.ts` into
+  `pnpm test`, where they cannot run.
+- The PWA specs must run against the build: `registerServiceWorker()` returns
+  early unless `import.meta.env.PROD`, so they do nothing against `pnpm dev`.
+
+E2E does **not** cover `firebase.json`'s `Cache-Control` headers — `vite
+preview` does not reproduce them, and that is where the stale-deploy bug lived.
+Deploy-time check, not a test.
+
 ## Conventions
 
 - TDD: write the failing test first (see existing `src/__tests__/`), then the
@@ -147,3 +169,10 @@ Static bundle on **Firebase Hosting** (GCP project `modern-ally-102412`), live a
 - UI copy lives in `src/i18n/{fr,de,en}.ts`; every user-facing string is keyed
   and translated into all three languages. `i18n.test.ts` enforces that the
   three dictionaries share exactly the same keys.
+- E2E specs select by `data-testid` (Playwright's `getByTestId()` default, so
+  nothing configures it), never by visible text or `aria-label`. That follows
+  from the rule above: the language is a per-profile setting, so a name-based
+  locator would assert one dictionary as a side effect of finding a button.
+  `getByRole()` without a name filter is fine — roles are language-independent.
+  Add ids as specs need them, never preemptively, and name them after the thing
+  (`numpad-validate`, `profile-switcher`), not the screen.

@@ -25,6 +25,7 @@ export const NumPad = ({ onDigit, onErase, onValidate, disabled = false }: Props
               key={digit}
               type="button"
               className="numpad__key"
+              data-testid={`numpad-digit-${digit}`}
               onClick={() => onDigit(digit)}
               disabled={disabled}
               aria-label={t('numpad.digit', { digit })}
@@ -38,6 +39,7 @@ export const NumPad = ({ onDigit, onErase, onValidate, disabled = false }: Props
         <button
           type="button"
           className="numpad__key numpad__key--erase"
+          data-testid="numpad-erase"
           onClick={onErase}
           disabled={disabled}
           aria-label={t('numpad.erase')}
@@ -47,6 +49,7 @@ export const NumPad = ({ onDigit, onErase, onValidate, disabled = false }: Props
         <button
           type="button"
           className="numpad__key"
+          data-testid="numpad-digit-0"
           onClick={() => onDigit(0)}
           disabled={disabled}
           aria-label={t('numpad.digit', { digit: 0 })}
@@ -56,6 +59,7 @@ export const NumPad = ({ onDigit, onErase, onValidate, disabled = false }: Props
         <button
           type="button"
           className="numpad__key numpad__key--validate"
+          data-testid="numpad-validate"
           onClick={onValidate}
           disabled={disabled}
           aria-label={t('numpad.validate')}

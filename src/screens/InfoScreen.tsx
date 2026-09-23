@@ -28,7 +28,7 @@ export const InfoScreen = ({ version, onBack }: Props) => {
       </header>
 
       <section className="info__panel info__panel--version">
-        <p className="info__identity">
+        <p className="info__identity" data-testid="about-version">
           <span className="info__app">Math Quizz</span>{' '}
           {t('info.version', { version })}
         </p>

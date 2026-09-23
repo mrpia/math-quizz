@@ -45,3 +45,54 @@ jobs:
       # Worth keeping separate from the tests — vitest 4 stopped augmenting
       # Vite's config type, which broke `tsc` while every test still passed.
       - run: pnpm build
+
+  e2e:
+    name: end-to-end (chromium)
+    runs-on: ubuntu-latest
+
+    # Deliberately not `needs: verify`. A browser failure and a unit failure are
+    # different news, and running them side by side means neither one hides the
+    # other behind a skipped job.
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # setup-node's pnpm cache covers node_modules, never the browser binaries,
+      # and those are the slow part — a Chromium download is larger than every
+      # dependency in this repo put together. Keyed on the lockfile, so a
+      # Playwright bump fetches the matching build instead of reusing the old one.
+      - uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - run: pnpm exec playwright install --with-deps chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+
+      # The cache holds the browser but not the system libraries it links
+      # against, and the runner image is free to change under us.
+      - run: pnpm exec playwright install-deps chromium
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+
+      # `playwright.config.ts` builds the bundle and serves it with
+      # `vite preview` before the first spec runs, so there is no separate
+      # build step here.
+      - run: pnpm test:e2e
+
+      # The only way to read a failure that did not reproduce locally.
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

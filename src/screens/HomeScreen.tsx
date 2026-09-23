@@ -47,6 +47,7 @@ export const HomeScreen = ({
           <button
             type="button"
             className="home__info-btn"
+            data-testid="open-about"
             onClick={onOpenInfo}
             aria-label={t('home.aboutAria')}
           >
@@ -55,6 +56,7 @@ export const HomeScreen = ({
           <button
             type="button"
             className="home__progress-btn"
+            data-testid="open-progress"
             onClick={onOpenProgress}
             aria-label={t('home.resultsAria')}
           >
@@ -63,6 +65,7 @@ export const HomeScreen = ({
           <button
             type="button"
             className="home__settings-btn"
+            data-testid="open-settings"
             onClick={onOpenSettings}
             aria-label={t('home.settingsAria')}
           >
@@ -114,6 +117,7 @@ export const HomeScreen = ({
       <button
         type="button"
         className="home__start-btn"
+        data-testid="start-session"
         onClick={onStart}
         disabled={!canStart}
       >

@@ -11,10 +11,11 @@ type Props = {
 
 export const QuestionCard = ({ question, given, answerTone = 'neutral' }: Props) => (
   <div className="question-card">
-    <div className="question-card__operation">
+    <div className="question-card__operation" data-testid="question-operation">
       {formatOperation(question)} <span className="question-card__equals">=</span>
     </div>
     <div
+      data-testid="answer-value"
       className={`question-card__answer${given === '' ? ' question-card__answer--empty' : ''}${
         answerTone === 'correct' ? ' question-card__answer--correct' : ''
       }`}
