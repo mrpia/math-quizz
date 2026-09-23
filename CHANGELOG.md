@@ -89,6 +89,16 @@ and the project uses [Semantic Versioning](https://semver.org/).
   Playwright all strip types without it, but a tool added later that expects
   `require('typescript')`, such as typescript-eslint, would need checking
   first.
+- **Vitest 4.1.11 → 5.0.1** (#11). No source, test or config change was
+  needed. The two things that broke `main` on the last major were checked
+  first: vitest 5 still accepts `vite ^8` as a peer (`^6.4.0 || ^7.0.0 ||
+  ^8.0.0`), so Vite stays put, and `defineConfig` from `vitest/config` is still
+  the supported shape, so `tsc --noEmit` is clean. The `vitest/globals` types
+  survived the removal of deprecated entry points. The suite collects the same
+  308 tests in 34 files as on vitest 4, so nothing dropped out silently. Two
+  5.0 defaults make tests stricter rather than looser, and the suite already
+  meets both: mocks are cleared before each test, and an async assertion
+  that is not awaited now fails the test.
 - `test.include` in `vite.config.ts` is pinned to `src/**/*.{test,spec}.{ts,tsx}`.
   Vitest globs from the repo root by default and would otherwise collect
   `e2e/*.spec.ts` into `pnpm test`, where the Playwright specs cannot run.
