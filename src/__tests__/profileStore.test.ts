@@ -13,6 +13,7 @@ import {
   importProfile,
   HISTORY_LIMIT,
   storageKeys,
+  loadPairStats,
 } from '../storage/profileStore';
 import { DEFAULT_SETTINGS } from '../domain/session';
 import type { SessionResult } from '../domain/session';
@@ -179,6 +180,38 @@ describe('training history', () => {
 it('defaults language to fr when absent from stored settings', () => {
   localStorage.setItem(storageKeys('default').settings, JSON.stringify({ questionCount: 10 }));
   expect(loadSettings('default').language).toBe('fr');
+});
+
+describe('loadPairStats', () => {
+  const missed = (offsetMinutes: number): SessionResult => {
+    const session = mkSession(offsetMinutes);
+    return { ...session, answers: [{ ...session.answers[0], given: 55 }] };
+  };
+
+  test('is empty for a profile with no history', () => {
+    expect(loadPairStats('default')).toEqual({});
+  });
+
+  test('counts tests and training together', () => {
+    recordSession('default', mkSession(0));
+    recordTrainingSession('default', missed(1));
+    const stats = loadPairStats('default')['7x8'];
+    expect(stats.attempts).toBe(2);
+    expect(stats.errors).toBe(1);
+  });
+
+  test('decays across both histories in the order they were played', () => {
+    // The training miss came first, so it weighs less than the test success.
+    recordTrainingSession('default', missed(0));
+    recordSession('default', mkSession(1));
+    const { weightedAttempts, weightedFailures } = loadPairStats('default')['7x8'];
+    expect(weightedFailures).toBeLessThan(weightedAttempts / 2);
+  });
+
+  test('reads only the profile it is given', () => {
+    recordSession('other', missed(0));
+    expect(loadPairStats('default')).toEqual({});
+  });
 });
 
 describe('export / import', () => {

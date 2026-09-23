@@ -52,7 +52,7 @@ a file may omit everything else, and the importer fills in a default. Inside
 
 | `data.*` | localStorage key | Contents |
 |---|---|---|
-| `settings` | `…:settings` | Timer target, question count, selected tables, mode, answer mode, language |
+| `settings` | `…:settings` | Timer target, question count, selected tables, mode, answer mode, language, adaptive-draw strength |
 | `history` | `…:history` | Completed timed tests, oldest first, capped at 50 |
 | `trainingHistory` | `…:training-history` | Completed training sessions, same shape, same cap |
 | `errors` | — | **Deprecated.** Lifetime per-pair counters written by versions up to 0.10.0. Accepted on import, never exported |

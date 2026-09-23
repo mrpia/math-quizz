@@ -13,7 +13,7 @@ const listSettings = {
 
 const renderScreen = (onCancel = () => {}) =>
   renderWithLanguage(
-    <ExerciseListScreen settings={listSettings} onCancel={onCancel} />,
+    <ExerciseListScreen profileId="default" settings={listSettings} onCancel={onCancel} />,
   );
 
 describe('ExerciseListScreen', () => {

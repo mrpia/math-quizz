@@ -24,13 +24,13 @@ afterEach(() => {
 
 describe('TrainingScreen', () => {
   test('no timer is shown', () => {
-    render(<TrainingScreen settings={settings} onComplete={() => {}} />);
+    render(<TrainingScreen profileId="default" settings={settings} onComplete={() => {}} />);
     expect(screen.queryByLabelText('temps en cours')).toBeNull();
     expect(screen.queryByLabelText('temps restant')).toBeNull();
   });
 
   test('a wrong answer shows the correction; advancing moves to the next question', () => {
-    render(<TrainingScreen settings={settings} onComplete={() => {}} />);
+    render(<TrainingScreen profileId="default" settings={settings} onComplete={() => {}} />);
 
     // Q1 — answer something wrong, submit
     fireEvent.keyDown(window, { key: '1' });
@@ -45,7 +45,7 @@ describe('TrainingScreen', () => {
 
   test('records one auto-marked answer per question with selfMarkedCorrect set', () => {
     let result: SessionResult | null = null;
-    render(<TrainingScreen settings={settings} onComplete={(r) => (result = r)} />);
+    render(<TrainingScreen profileId="default" settings={settings} onComplete={(r) => (result = r)} />);
 
     // Q1: submit then advance
     fireEvent.keyDown(window, { key: '1' });
@@ -66,7 +66,7 @@ describe('TrainingScreen', () => {
   });
 
   test('feedback fills the input with the correct answer in green + small correction caption', () => {
-    const { container } = render(<TrainingScreen settings={settings} onComplete={() => {}} />);
+    const { container } = render(<TrainingScreen profileId="default" settings={settings} onComplete={() => {}} />);
 
     // Deterministic (Math.random=0): Q1 is 7 × 3, so the correct answer is 21.
     fireEvent.keyDown(window, { key: '1' }); // wrong answer
@@ -82,13 +82,13 @@ describe('TrainingScreen', () => {
 
   test('cancel button hands control back to the caller', () => {
     const onCancel = vi.fn();
-    render(<TrainingScreen settings={settings} onComplete={() => {}} onCancel={onCancel} />);
+    render(<TrainingScreen profileId="default" settings={settings} onComplete={() => {}} onCancel={onCancel} />);
     fireEvent.click(screen.getByRole('button', { name: 'Arrêter' }));
     expect(onCancel).toHaveBeenCalledOnce();
   });
 
   test('empty answer + Enter does not advance to feedback', () => {
-    render(<TrainingScreen settings={settings} onComplete={() => {}} />);
+    render(<TrainingScreen profileId="default" settings={settings} onComplete={() => {}} />);
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(screen.getByText('Question 1 / 2')).toBeInTheDocument();
     expect(screen.queryByText(/Bravo|Presque/)).toBeNull();

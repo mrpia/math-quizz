@@ -32,7 +32,7 @@ const advance = (ms: number) =>
 
 describe('PaperSessionScreen', () => {
   test('lead-in precedes the first question', () => {
-    render(<PaperSessionScreen settings={settings} onComplete={() => {}} />);
+    render(<PaperSessionScreen profileId="default" settings={settings} onComplete={() => {}} />);
     expect(screen.getByText('Prêt ?')).toBeInTheDocument();
     expect(screen.queryByText('Question 1 / 2')).toBeNull();
 
@@ -44,7 +44,7 @@ describe('PaperSessionScreen', () => {
     let result: SessionResult | null = null;
     let callCount = 0;
     render(
-      <PaperSessionScreen
+      <PaperSessionScreen profileId="default"
         settings={settings}
         onComplete={(r) => {
           callCount += 1;
@@ -76,7 +76,7 @@ describe('PaperSessionScreen', () => {
 
   test('shows no visual countdown bar (time-pressure cue removed)', () => {
     const { container } = render(
-      <PaperSessionScreen settings={settings} onComplete={() => {}} />,
+      <PaperSessionScreen profileId="default" settings={settings} onComplete={() => {}} />,
     );
     advance(3000); // past the lead-in, into the first question
     expect(screen.getByText('Question 1 / 2')).toBeInTheDocument();
@@ -86,14 +86,14 @@ describe('PaperSessionScreen', () => {
 
   test('cancel button (shown during questions) hands control back to the caller', () => {
     const onCancel = vi.fn();
-    render(<PaperSessionScreen settings={settings} onComplete={() => {}} onCancel={onCancel} />);
+    render(<PaperSessionScreen profileId="default" settings={settings} onComplete={() => {}} onCancel={onCancel} />);
     advance(3000); // past the lead-in, into the question phase
     fireEvent.click(screen.getByRole('button', { name: 'Arrêter' }));
     expect(onCancel).toHaveBeenCalledOnce();
   });
 
   test('shows the operation without an answer (a × b = ?)', () => {
-    render(<PaperSessionScreen settings={settings} onComplete={() => {}} />);
+    render(<PaperSessionScreen profileId="default" settings={settings} onComplete={() => {}} />);
     advance(3000);
     // QuestionCard renders "<op> =" in one element, so match a substring.
     // The exact first operand depends on MULTIPLIERS + the deterministic

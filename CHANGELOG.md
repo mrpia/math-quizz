@@ -7,7 +7,27 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-23
+
 ### Added
+- **Adaptive question draw** (#14, roadmap item 2). Pairs the child has been
+  getting wrong lately come up more often. Each pair in the pool weighs
+  `1 + α × weightedErrorRate`. That is the same recency-weighted rate the
+  progress screen ranks by, so a pair that has since been fixed stops being
+  favoured. `generateQuestions(settings, stats?)` samples without replacement
+  (Efraimidis–Spirakis), then shuffles so the heavy pairs don't cluster at the
+  start. A pair with no history is weighted as if its error rate were
+  `UNPRACTISED_RATE` (0.25). That puts it above a mastered pair and below one
+  missed half the time, so a newly selected table gets its turn. With α = 0,
+  or on a fresh profile where every pair is equally unknown, the draw stays
+  uniform.
+  `loadPairStats(profileId)` feeds it from the test and training histories
+  merged by `startedAt`. The four session screens now take a `profileId` prop.
+- **Settings → "Revoir plus souvent ce qui est difficile"**, with three levels
+  stored as `settings.adaptiveDraw: 'off' | 'moderate' | 'strong'` (α = 0 / 2
+  / 5, default `moderate`). Added to the backup schema as an optional,
+  sanitised field. The change is additive, so `formatVersion` stays 1, and
+  older files read as `moderate`.
 - **CI tests Node 22 and 24** (#13). `verify` is now a matrix, one leg per LTS
   line. Both lines passed `install --frozen-lockfile`, `test` and `build`
   locally (22.23.2, 24.21.0) before the matrix went in. `e2e` stays on 22,
@@ -181,10 +201,6 @@ and the project uses [Semantic Versioning](https://semver.org/).
   the only path anything requests. Adding a router means revisiting this, and a
   blanket `**` rule is not the fix: it would collide with the `immutable` rule
   on `/assets/**`.
-
-No version bump: nothing here changes what the child sees, so `package.json`
-and `src/domain/releaseNotes.ts` are untouched. The `data-testid` attributes do
-reach the bundle, but they are inert — no markup, styling or behaviour moves.
 
 ## [1.0.0] - 2026-09-22
 

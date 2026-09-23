@@ -89,6 +89,12 @@ export const de: Record<TranslationKey, string> = {
   'settings.partialCredit': 'Punkte für richtige, aber langsame Antwort (0–1)',
   'settings.partialCreditHint':
     '0 = keine Punkte · 0.5 = halber Punkt · 1 = wie eine schnelle Antwort',
+  'settings.adaptiveDraw': 'Schwierige Rechnungen öfter üben',
+  'settings.adaptiveDrawHint':
+    'Rechnungen, bei denen du dich in letzter Zeit vertan hast, kommen öfter dran.',
+  'settings.adaptiveDrawOff': 'Nein',
+  'settings.adaptiveDrawModerate': 'Etwas',
+  'settings.adaptiveDrawStrong': 'Viel',
   'settings.save': 'Speichern',
   'settings.clearHistory': 'Verlauf löschen',
   'settings.clearConfirm': 'Verlauf und Statistiken löschen?',

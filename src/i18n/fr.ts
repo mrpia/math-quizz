@@ -86,6 +86,12 @@ export const fr = {
   'settings.partialCredit': 'Crédit pour réponse correcte mais lente (0–1)',
   'settings.partialCreditHint':
     "0 = pas de crédit · 0.5 = demi-point · 1 = autant qu'une réponse rapide",
+  'settings.adaptiveDraw': 'Revoir plus souvent ce qui est difficile',
+  'settings.adaptiveDrawHint':
+    "Les calculs où tu t'es trompé ces derniers temps reviennent plus souvent.",
+  'settings.adaptiveDrawOff': 'Non',
+  'settings.adaptiveDrawModerate': 'Un peu',
+  'settings.adaptiveDrawStrong': 'Beaucoup',
   'settings.save': 'Enregistrer',
   'settings.clearHistory': "Effacer l'historique",
   'settings.clearConfirm': "Effacer l'historique et les statistiques ?",
