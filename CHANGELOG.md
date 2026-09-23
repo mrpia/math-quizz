@@ -141,6 +141,13 @@ and the project uses [Semantic Versioning](https://semver.org/).
   10.27 global virtual store layout) do not reach this project: its only
   auto-installed peer is now declared directly, and the lockfile has no git or
   tarball dependencies.
+- **`@types/node` ^26.6.2 → ^22.20.4**, a deliberate step down a major. The
+  types describe the runtime `tsc` assumes, and the oldest runtime in `engines`
+  is Node 22. With 26's types, a Node 26-only API would type-check and then fail
+  on 22. They only reach `tsconfig.e2e.json` (`"types": ["node"]`). Both peer
+  ranges still hold: vite `^20.19.0 || >=22.12.0`, vitest `^22.0.0 || >=24.0.0`.
+  Raise it together with the lowest line in `engines`, not with the newest
+  Node.
 - `test.include` in `vite.config.ts` is pinned to `src/**/*.{test,spec}.{ts,tsx}`.
   Vitest globs from the repo root by default and would otherwise collect
   `e2e/*.spec.ts` into `pnpm test`, where the Playwright specs cannot run.
