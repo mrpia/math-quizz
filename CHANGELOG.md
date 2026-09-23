@@ -76,6 +76,19 @@ and the project uses [Semantic Versioning](https://semver.org/).
   `process` compiling would turn a caught mistake into a runtime crash.
 
 ### Changed
+- **TypeScript 5.9.3 → 7.0.2** (#10). No source or `tsconfig` change was
+  needed. Both projects (`tsconfig.json`, `tsconfig.e2e.json`) check clean,
+  including the spots the issue flagged: the import attribute in
+  `vite.config.ts`, `import.meta.glob` typing in `siteConfig.test.ts`, and the
+  mapped types behind `Record<Language, string[]>`. To rule out a vacuous pass,
+  `--listFilesOnly` shows all 85 project files are covered and a deliberately
+  wrong assignment still fails. TS 7 is the native (Go) compiler: `tsc --noEmit`
+  dropped from 11–16 s to about 1 s locally. One consequence to know about: the
+  `typescript` package no longer exports the JS compiler API (its `.` export is
+  now only a version stub). Nothing here imports it, since Vite, Vitest and
+  Playwright all strip types without it, but a tool added later that expects
+  `require('typescript')`, such as typescript-eslint, would need checking
+  first.
 - `test.include` in `vite.config.ts` is pinned to `src/**/*.{test,spec}.{ts,tsx}`.
   Vitest globs from the repo root by default and would otherwise collect
   `e2e/*.spec.ts` into `pnpm test`, where the Playwright specs cannot run.
