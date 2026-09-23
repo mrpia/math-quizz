@@ -99,6 +99,22 @@ and the project uses [Semantic Versioning](https://semver.org/).
   5.0 defaults make tests stricter rather than looser, and the suite already
   meets both: mocks are cleared before each test, and an async assertion
   that is not awaited now fails the test.
+- **@testing-library/jest-dom 6.9.1 → 7.0.1** (#12). No source, test or setup
+  change was needed. The 7.0 release removes and renames no matchers; its two
+  breaking changes are a Node floor of 22, which `engines` already sets higher
+  (22.22.2), and `@testing-library/dom` becoming a required peer. That peer was
+  already in the tree at 10.4.1 for `@testing-library/react` and `user-event`,
+  and the lockfile resolves jest-dom to that same copy, so there is one DOM
+  library behind both the queries and the matchers. `import
+  '@testing-library/jest-dom/vitest'` in `src/test-setup.ts` is still an
+  exported entry point. Same 308 tests in 34 files.
+- **`@testing-library/dom` is now a direct devDependency** (`^10.4.1`).
+  jest-dom 7, `@testing-library/react` 16 and `user-event` all need it as a
+  peer, and until now it was only installed because pnpm installs missing peers
+  by default (`auto-install-peers`). Declaring it keeps all three working if
+  that setting is ever turned off, and makes the shared version visible in
+  `package.json`. The range stays on 10, where all three peer ranges
+  (`>=10 <11`, `^10.0.0`) overlap. The resolved version is unchanged at 10.4.1.
 - `test.include` in `vite.config.ts` is pinned to `src/**/*.{test,spec}.{ts,tsx}`.
   Vitest globs from the repo root by default and would otherwise collect
   `e2e/*.spec.ts` into `pnpm test`, where the Playwright specs cannot run.
