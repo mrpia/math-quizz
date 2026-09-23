@@ -20,8 +20,16 @@ permissions:
 
 jobs:
   verify:
-    name: test + build
+    name: test + build (node ${{ matrix.node }})
     runs-on: ubuntu-latest
+
+    # One leg per LTS line in package.json's `engines`. Keep the two lists
+    # identical: `.npmrc` sets engine-strict, so a line missing from `engines`
+    # fails install, and a line missing here ships untested.
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
 
     steps:
       - uses: actions/checkout@v4
@@ -30,9 +38,11 @@ jobs:
       # so CI and a local checkout cannot drift.
       - uses: pnpm/action-setup@v4
 
+      # A bare major resolves to its latest release, which is what a
+      # contributor installing that line today would get.
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ matrix.node }}
           cache: pnpm
 
       # --frozen-lockfile fails if pnpm-lock.yaml is out of step with
@@ -45,6 +55,21 @@ jobs:
       # Worth keeping separate from the tests — vitest 4 stopped augmenting
       # Vite's config type, which broke `tsc` while every test still passed.
       - run: pnpm build
+
+  # Branch protection on main requires a check named exactly `test + build`,
+  # and a matrix renames its legs to `test + build (node 22)` and so on. This
+  # job keeps the old name, so the required check still reports and adding a
+  # Node line never means editing repo settings.
+  #
+  # `always()`, not `!cancelled()`: a required check that is skipped counts as
+  # passing, so the gate has to run and fail on every outcome but success.
+  verify-all:
+    name: test + build
+    needs: verify
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "${{ needs.verify.result }}" = success
 
   e2e:
     name: end-to-end (chromium)
@@ -59,6 +84,8 @@ jobs:
 
       - uses: pnpm/action-setup@v4
 
+      # Not in the matrix: Node only builds the bundle and serves it here, and
+      # `verify` already builds on every line. The browser is what this job tests.
       - uses: actions/setup-node@v4
         with:
           node-version: 22

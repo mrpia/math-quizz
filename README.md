@@ -37,7 +37,10 @@ where and with what consent; see "No telemetry, no analytics" under
 
 ## Prerequisites
 
-- Node.js **22+**
+- Node.js **22** (22.22.2 or later) or **24** (24.15.0 or later), the two LTS
+  lines CI tests on every push. `pnpm install` refuses any other version,
+  including Node 26: `engines` in `package.json` sets the range and `.npmrc`
+  turns pnpm's default warning into an error. The floors are jsdom's, not ours.
 - pnpm **10+** (install with `npm install -g pnpm` or
   [`corepack enable`](https://pnpm.io/installation#using-corepack))
 

@@ -8,6 +8,20 @@ and the project uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **CI tests Node 22 and 24** (#13). `verify` is now a matrix, one leg per LTS
+  line. Both lines passed `install --frozen-lockfile`, `test` and `build`
+  locally (22.23.2, 24.21.0) before the matrix went in. `e2e` stays on 22,
+  because Node only builds and serves the bundle there. Branch protection
+  requires a check named `test + build` and the matrix renames its legs, so a
+  gate job keeps that name. It runs under `always()` and fails unless every
+  leg succeeded, because a skipped required check counts as passing.
+- **`engines.node: "^22.22.2 || ^24.15.0"` in `package.json`, enforced by
+  `.npmrc` (`engine-strict=true`).** Without the `.npmrc`, pnpm 10 only prints
+  a `WARN Unsupported engine` for the project's own `engines` and installs
+  anyway (checked on 22.12.0). The floors are jsdom 30's declared engines. The
+  old README claim of "22+" was already false: vite 8 needs 22.12, jsdom
+  22.22.2. There is no `>=`, so Node 26 is refused until it is added to the
+  matrix and to `engines` together.
 - **An end-to-end suite that runs the built bundle in a real browser**
   (`e2e/`, `playwright.config.ts`, `pnpm test:e2e`). Everything the project
   tested until now ran source modules under jsdom, which has no service worker,
