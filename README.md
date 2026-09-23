@@ -78,11 +78,64 @@ then hard-reload. The production-only guard does not remove existing registratio
 ## Test
 
 ```bash
-pnpm test           # one-off Vitest run
-pnpm test:watch     # watch mode
+pnpm test           # one-off Vitest run — the fast one, run this constantly
+pnpm test:watch     # same, in watch mode
+pnpm test:e2e       # Playwright, against a fresh production build
 ```
 
-Test files live in `src/__tests__/`.
+Two suites, and the split between them is a rule rather than a taste: **if a
+test can be written in Vitest, it stays in Vitest.**
+
+`pnpm test` is 30-odd files in `src/__tests__/`, source modules under `jsdom`.
+It covers the domain logic, every component and several whole flows, and it
+finishes in seconds.
+
+`pnpm test:e2e` (specs in [`e2e/`](e2e/)) runs Chromium against `dist/` served
+by `vite preview`, and earns its keep only where `jsdom` cannot follow:
+
+| Spec | What only a browser can show |
+|---|---|
+| `offline.spec.ts` | the service worker installs, caches the shell and serves it with the network gone; a launch while online still prefers the network |
+| `backup.spec.ts` | a real download, saved to disk, fed back through the real file picker |
+| `profiles.spec.ts` | the active profile and its history survive an actual page reload |
+| `bundle.spec.ts` | the built site serves the manifest, the icons, relative asset paths and the version `package.json` declares |
+| `session.spec.ts` | the on-screen pad and a physical keyboard on a tablet-sized viewport, timed by a real clock |
+
+`playwright.config.ts` builds and starts the preview server itself, so
+`pnpm test:e2e` needs nothing running first — the first run also needs
+`pnpm exec playwright install chromium`. It type-checks the E2E tree
+(`tsconfig.e2e.json`) before launching a browser; `pnpm build` deliberately does
+not, so the typecheck that gates a release stays a typecheck of what ships.
+
+What E2E does **not** cover: Firebase Hosting's `Cache-Control` headers.
+`vite preview` does not reproduce `firebase.json`, and a service worker's
+`fetch()` goes through the browser's ordinary HTTP cache — which is where the
+one-hour-stale-deploy bug actually lived. That stays a deploy-time check.
+
+### Selecting elements in E2E specs: `data-testid`
+
+Every visible string and nearly every `aria-label` in this app is translated,
+and the language is a per-profile setting. So `getByRole('button', { name:
+'Lancer' })` would assert the French dictionary as a side effect of looking a
+button up, and break on a copy change in a language the spec was never about.
+E2E specs therefore select by test id — which `page.getByTestId()` reads from
+`data-testid` by default, so nothing is configured for it.
+
+- `getByTestId()` for identity; `getByRole()` **without** a name filter where
+  the role alone is unambiguous. Roles are language-independent; accessible
+  names are not. Filtering by a *profile* name is fine — the child typed it, no
+  dictionary contains it.
+- Add ids as specs need them, never preemptively.
+- Name them after the thing, not the screen — `numpad-validate`,
+  `profile-switcher`, `backup-export` — so a spec does not break when a
+  component moves.
+- They ship in the bundle. A handful of attributes does not justify a
+  strip-at-build step.
+
+None of this leaves the accessible names untested: `i18n.test.ts` enforces that
+the three dictionaries share exactly the same keys, and `languageSwitch.test.tsx`
+renders the screens once per language and asserts the characteristic word. One
+render each, no browser — the right layer for it.
 
 ## Build
 
@@ -161,6 +214,8 @@ src/
 ├── hooks/                  useNumericKeyboard
 ├── styles/                 global CSS + design tokens
 └── __tests__/              Vitest suite
+
+e2e/                        Playwright specs, run against the built bundle
 ```
 
 ## Icons
@@ -179,9 +234,11 @@ npx -y sharp-cli --density 576 -i public/icon-maskable.svg -o public/apple-touch
 
 ## Stack
 
-- [Vite 5](https://vitejs.dev/) + [React 18](https://react.dev/) + TypeScript
-- [Vitest 2](https://vitest.dev/) with `jsdom` for component tests
-- `@testing-library/react` for component + hook tests
+- [Vite](https://vitejs.dev/) + [React](https://react.dev/) + TypeScript
+- [Vitest](https://vitest.dev/) with `jsdom`, and `@testing-library/react`, for
+  the unit and component suite
+- [Playwright](https://playwright.dev/) (Chromium only) for the handful of
+  things that need a real browser
 - No CSS framework — plain CSS with custom properties (light + dark mode)
 
 ## Storage layout
@@ -243,7 +300,10 @@ The file format is a published contract, not an internal detail:
    before pushing. CI runs both on every pull request
    ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) — including
    Dependabot's, which is the point: a dependency bump that breaks the build
-   should fail before it reaches `main`, not after.
+   should fail before it reaches `main`, not after. A separate CI job runs
+   `pnpm test:e2e`, so a browser failure and a unit failure stay separate news.
+   Touching the service worker, the backup file format or anything that has to
+   survive a reload means running it locally too.
 3. Keep the zero-runtime-dependency rule — no chart or UI libraries. An
    inline SVG or a few lines of CSS almost always do the job.
 4. Follow the existing shape: pure logic in `src/domain/`, presentational

@@ -15,7 +15,7 @@ export const TrickiestPairsList = ({ pairs }: Props) => {
   }
   const maxRate = Math.max(...pairs.map((p) => p.errorRate)) || 1;
   return (
-    <ul className="pairs">
+    <ul className="pairs" data-testid="trickiest-pairs">
       {pairs.map((p) => (
         <li className="pairs__row" key={`${p.a}x${p.b}`}>
           <span className="pairs__pair">

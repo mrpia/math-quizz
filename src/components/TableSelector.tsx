@@ -33,7 +33,7 @@ export const TableSelector = ({ selected, onChange }: Props) => {
           {allSelected ? t('tables.deselectAll') : t('tables.selectAll')}
         </button>
       </div>
-      <div className="table-selector__grid">
+      <div className="table-selector__grid" data-testid="table-selector">
         {MULTIPLICANDS.map((n) => {
           const isOn = selected.includes(n);
           return (

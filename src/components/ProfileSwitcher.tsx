@@ -27,6 +27,7 @@ export const ProfileSwitcher = ({ profiles, activeId, onSwitch }: Props) => {
   return (
     <div
       className="profile-switcher"
+      data-testid="profile-switcher"
       role="radiogroup"
       aria-label={t('profiles.switchAria')}
     >

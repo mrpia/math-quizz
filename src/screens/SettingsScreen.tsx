@@ -169,6 +169,7 @@ export const SettingsScreen = ({
         <input
           type="number"
           step={0.5}
+          data-testid="settings-target-time"
           min={SECONDS_MIN}
           max={SECONDS_MAX}
           value={seconds}
@@ -184,6 +185,7 @@ export const SettingsScreen = ({
         <input
           type="number"
           step={1}
+          data-testid="settings-question-count"
           min={SETTINGS_BOUNDS.questionCount.min}
           max={SETTINGS_BOUNDS.questionCount.max}
           value={count}
@@ -214,7 +216,12 @@ export const SettingsScreen = ({
         />
       </div>
 
-      <button type="button" className="settings__primary" onClick={submit}>
+      <button
+        type="button"
+        className="settings__primary"
+        data-testid="settings-save"
+        onClick={submit}
+      >
         {t('settings.save')}
       </button>
 
@@ -233,7 +240,12 @@ export const SettingsScreen = ({
         <p className="settings__hint">{t('settings.dataHint')}</p>
 
         <div className="settings__transfer">
-          <button type="button" className="settings__secondary" onClick={handleExport}>
+          <button
+            type="button"
+            className="settings__secondary"
+            data-testid="backup-export"
+            onClick={handleExport}
+          >
             {`⬇️ ${t('settings.export')}`}
           </button>
           <label className="settings__secondary settings__file">
@@ -241,6 +253,7 @@ export const SettingsScreen = ({
             <input
               type="file"
               accept="application/json,.json"
+              data-testid="backup-import"
               className="settings__file-input"
               onChange={(event) => void handleFile(event)}
             />
@@ -290,7 +303,12 @@ export const SettingsScreen = ({
               {t('settings.importWarning', { name: nameOf(importTarget) })}
             </p>
             <div className="settings__confirm-row">
-              <button type="button" className="settings__danger" onClick={confirmImport}>
+              <button
+                type="button"
+                className="settings__danger"
+                data-testid="import-confirm"
+                onClick={confirmImport}
+              >
                 {t('settings.importYes')}
               </button>
               <button
@@ -319,6 +337,7 @@ export const SettingsScreen = ({
         <button
           type="button"
           className="settings__danger"
+          data-testid="clear-history"
           onClick={() => setConfirming(true)}
         >
           {`🧹 ${t('settings.clearHistory')}`}
@@ -330,6 +349,7 @@ export const SettingsScreen = ({
             <button
               type="button"
               className="settings__danger"
+              data-testid="clear-confirm"
               onClick={() => {
                 onClearHistory();
                 setConfirming(false);

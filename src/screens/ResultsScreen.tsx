@@ -162,7 +162,7 @@ export const ResultsScreen = ({ result, onReplay, onHome, onSave }: Props) => {
     <div className="results">
       <header className="results__header">
         <h2>{t('results.title')}</h2>
-        <div className="results__score">
+        <div className="results__score" data-testid="results-score">
           {formatPoints(points)} / {max}
         </div>
       </header>

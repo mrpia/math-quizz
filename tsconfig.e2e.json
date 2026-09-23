@@ -1,0 +1,12 @@
+{
+  // The E2E tree runs in Node (Playwright's runner), not in the browser, and it
+  // has no business seeing vitest's globals. Kept out of the root tsconfig so
+  // `pnpm build` stays a typecheck of what actually ships — and so adding
+  // @types/node here does not make `process` compile inside `src/`, where it
+  // would be a runtime crash the compiler used to catch.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["e2e", "playwright.config.ts"]
+}

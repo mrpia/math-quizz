@@ -33,7 +33,9 @@ export const Timer = ({ targetMs, resetKey }: Props) => {
       role="status"
       aria-label={overTarget ? t('timer.over') : t('timer.running')}
     >
-      <span className="timer__value">{seconds}s</span>
+      <span className="timer__value" data-testid="session-timer">
+        {seconds}s
+      </span>
       <span className="timer__target"> {t('timer.target', { target: (targetMs / 1000).toFixed(0) })}</span>
     </div>
   );
