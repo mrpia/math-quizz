@@ -130,6 +130,17 @@ and the project uses [Semantic Versioning](https://semver.org/).
   runner-version floors only bind self-hosted runners, the workflow runs no git
   commands and has no `pull_request_target` trigger, both setup-node steps set
   `cache: pnpm` explicitly, and the report upload keeps the default zip.
+- **pnpm 10.11.0 → 10.34.5** (`packageManager`). Same major, and the lockfile
+  is untouched: 10.34.5 accepts it under `--frozen-lockfile` and a plain
+  `install` rewrites nothing. The reason is security fixes in between: `tar`
+  7.5.7 for CVE-2026-24842 (10.29), refusing lockfile git resolutions whose
+  `commit` is not a 40-character SHA and patch files that write outside their
+  package, and a tarball-integrity mismatch now fails the install instead of
+  being silently re-resolved (10.34). The semi-breaking changes on the way
+  (10.15 peer preference, 10.26 git `prepare` scripts and tarball integrity,
+  10.27 global virtual store layout) do not reach this project: its only
+  auto-installed peer is now declared directly, and the lockfile has no git or
+  tarball dependencies.
 - `test.include` in `vite.config.ts` is pinned to `src/**/*.{test,spec}.{ts,tsx}`.
   Vitest globs from the repo root by default and would otherwise collect
   `e2e/*.spec.ts` into `pnpm test`, where the Playwright specs cannot run.
