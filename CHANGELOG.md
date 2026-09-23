@@ -74,6 +74,13 @@ and the project uses [Semantic Versioning](https://semver.org/).
 - `tsconfig.e2e.json`, so the E2E tree is type-checked (by `pnpm test:e2e`)
   without `@types/node` entering the program that compiles `src/`, where
   `process` compiling would turn a caught mistake into a runtime crash.
+- **`.github/dependabot.yml`, for GitHub Actions only.** The five actions in
+  `ci.yml` sat on v4 until every run was warning that the runner forced them
+  off their Node 20 runtime; nothing flagged it sooner. With floating major tags
+  the only update Dependabot can open is a new major, so the PRs stay rare and
+  each one is the kind that needs its breaking changes read. npm stays out:
+  those upgrades are done by hand, one package per PR. Dependabot's npm
+  security updates are a repository setting and are not affected.
 
 ### Changed
 - **TypeScript 5.9.3 → 7.0.2** (#10). No source or `tsconfig` change was
