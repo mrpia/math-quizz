@@ -13,7 +13,9 @@
  *   error key fails the whole file. Silently dropping records would hand the
  *   child a partial history that looks complete, and a bad pair key would reach
  *   `trickiestPairs`, whose `key.split('x').map(Number)` then renders
- *   "NaN × NaN";
+ *   "NaN × NaN". The same goes for a question the app could never have asked
+ *   (#45): its operands must come from the tables and its `expected` must be
+ *   the right answer, or a hand-edited "7 × 8 = 999" would score as correct;
  * - **settings are sanitised, not rejected** — every setting has a safe default,
  *   so an out-of-range number is clamped and an unknown enum value falls back.
  *   `loadSettings` runs stored settings through the same `sanitizeSettings`
@@ -22,9 +24,10 @@
  */
 import { DEFAULT_SETTINGS, SETTINGS_BOUNDS } from './session';
 import type { AdaptiveDraw, AnswerMode, AnswerRecord, SessionResult, Settings } from './session';
+import { expectedAnswer } from './question';
 import type { Mode, Operator, Question } from './question';
 import { SITE_URL } from '../config/site';
-import { MULTIPLICANDS } from './tables';
+import { MULTIPLICANDS, MULTIPLIERS } from './tables';
 import { LANGUAGES } from '../i18n';
 import type { Language } from '../i18n/types';
 
@@ -125,6 +128,7 @@ const ANSWER_MODES: readonly string[] = [
   'list',
 ] satisfies AnswerMode[];
 const TABLES: readonly number[] = MULTIPLICANDS;
+const FACTORS: readonly number[] = MULTIPLIERS;
 const ADAPTIVE_DRAWS: readonly string[] = [
   'off',
   'moderate',
@@ -141,7 +145,10 @@ const isQuestion = (value: unknown): value is Question =>
   isNumber(value.b) &&
   isNumber(value.expected) &&
   isString(value.op) &&
-  OPERATORS.includes(value.op);
+  OPERATORS.includes(value.op) &&
+  TABLES.includes(value.a) &&
+  FACTORS.includes(value.b) &&
+  value.expected === expectedAnswer(value.a, value.b, value.op as Operator);
 
 const isAnswerRecord = (value: unknown): value is AnswerRecord =>
   isRecord(value) &&

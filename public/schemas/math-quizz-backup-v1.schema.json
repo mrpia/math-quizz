@@ -174,18 +174,24 @@
       }
     },
     "question": {
-      "description": "A question is always stored as the pair (a, b) plus an operator, never as the rendered text. For 'mul' the child is shown 'a × b' and `expected` is a×b. For 'div' the child is shown '(a×b) ÷ a' and `expected` is b — so the same stored pair backs both directions, and both feed the same error counter.",
+      "description": "A question is always stored as the pair (a, b) plus an operator, never as the rendered text. For 'mul' the child is shown 'a × b' and `expected` is a×b. For 'div' the child is shown '(a×b) ÷ a' and `expected` is b — so the same stored pair backs both directions, and both feed the same error counter. The app rejects the whole file on import if any question breaks the arithmetic rule for `expected`, which this schema cannot express on its own.",
       "type": "object",
       "required": ["a", "b", "op", "expected"],
       "properties": {
-        "a": { "description": "First operand: the table being drilled.", "type": "number" },
-        "b": { "description": "Second operand: the multiplier.", "type": "number" },
+        "a": {
+          "description": "First operand: the table being drilled. One of the tables the app offers.",
+          "enum": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 24, 25]
+        },
+        "b": {
+          "description": "Second operand: the multiplier, 2 to 12.",
+          "enum": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        },
         "op": {
           "description": "Which way the pair is asked.",
           "enum": ["mul", "div"]
         },
         "expected": {
-          "description": "The correct answer: a×b for 'mul', b for 'div'.",
+          "description": "The correct answer: a×b for 'mul', b for 'div'. Enforced on import: any other value makes the file corrupt.",
           "type": "number"
         }
       }

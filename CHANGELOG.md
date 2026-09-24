@@ -48,6 +48,21 @@ and the project uses [Semantic Versioning](https://semver.org/).
   154 entries to 99 facts, so a session only repeats a fact past 99 questions.
 
 ### Fixed
+- **Import rejects questions the app could never have asked** (#45).
+  `isQuestion` only checked that `a`, `b` and `expected` were numbers, so a
+  hand-edited `{ a: 7, b: 8, op: "mul", expected: 999 }` answered 999 imported
+  as a correct 7 × 8, and a 13 × 13 record ranked in "Paires à revoir" with no
+  heat-map cell. It now also requires `a` in `MULTIPLICANDS`, `b` in
+  `MULTIPLIERS` and `expected === expectedAnswer(a, b, op)`, a helper
+  extracted from `buildQuestion` so the generator and the validator share one
+  formula. A violation fails the whole file as `corrupt`. The schema gains
+  `enum`s for `a` and `b` (pinned to the code by `backup.test.ts`), and it and
+  `docs/data-format.md` say the arithmetic rule is enforced. `formatVersion`
+  stays 1: the multipliers 1 and 15 were dropped on 2026-06-13, before the
+  first deployed build, so no released version wrote a record this rejects.
+  This does narrow the published v1 schema for third-party writers: a
+  hand-built file with, say, `a: 13` validated before and no longer does.
+  No file the app wrote is affected.
 - **Stored settings are sanitised on load** (#46). `loadSettings` spread
   whatever localStorage held over `DEFAULT_SETTINGS`, so a hand-edited or
   newer-version blob reached `generateQuestions` unchecked: `questionCount: 0`
