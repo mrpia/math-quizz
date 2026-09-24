@@ -5,6 +5,7 @@ import { LanguageToggle } from '../components/LanguageToggle';
 import { ProfileSwitcher } from '../components/ProfileSwitcher';
 import type { ProfileEntry } from '../storage/profileRegistry';
 import type { Settings } from '../domain/session';
+import { formatSeconds } from '../domain/format';
 import { useI18n } from '../i18n/I18nContext';
 import './HomeScreen.css';
 
@@ -32,9 +33,7 @@ export const HomeScreen = ({
   onOpenInfo,
 }: Props) => {
   const { t } = useI18n();
-  const seconds = (settings.durationPerQuestionMs / 1000)
-    .toFixed(1)
-    .replace('.0', '');
+  const seconds = formatSeconds(settings.durationPerQuestionMs);
   const canStart = settings.selectedTables.length > 0;
   const isTraining = (settings.answerMode ?? 'screen') === 'training';
   const isList = (settings.answerMode ?? 'screen') === 'list';

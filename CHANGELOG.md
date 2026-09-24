@@ -7,6 +7,15 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **Half-second targets were shown rounded up** (#38). The timer label and the
+  results legend formatted the target with `toFixed(0)`, so a 2.5 s target read
+  "cible 3s" while scoring applied 2500 ms. A 2.7 s answer was then marked slow
+  under a legend claiming 3 s. All three target labels (home, timer, results)
+  now go through one `formatSeconds` helper in `src/domain/format.ts`. It keeps
+  up to two decimals, because the Settings input's 0.5 step is only a hint and a
+  typed or imported 2250 ms is valid.
+
 ## [1.1.0] - 2026-09-23
 
 ### Added
