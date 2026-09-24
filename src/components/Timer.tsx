@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { formatSeconds } from '../domain/format';
 import { useI18n } from '../i18n/I18nContext';
 import './Timer.css';
 
@@ -36,7 +37,7 @@ export const Timer = ({ targetMs, resetKey }: Props) => {
       <span className="timer__value" data-testid="session-timer">
         {seconds}s
       </span>
-      <span className="timer__target"> {t('timer.target', { target: (targetMs / 1000).toFixed(0) })}</span>
+      <span className="timer__target"> {t('timer.target', { target: formatSeconds(targetMs) })}</span>
     </div>
   );
 };

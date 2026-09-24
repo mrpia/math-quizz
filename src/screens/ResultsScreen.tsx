@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { SessionResult, AnswerRecord } from '../domain/session';
 import { totalScore } from '../domain/scoring';
+import { formatSeconds } from '../domain/format';
 import { useI18n } from '../i18n/I18nContext';
 import './ResultsScreen.css';
 
@@ -40,7 +41,7 @@ const formatPoints = (n: number): string =>
 
 const ScreenResults = ({ result }: { result: SessionResult }) => {
   const { t } = useI18n();
-  const targetSeconds = (result.durationPerQuestionMs / 1000).toFixed(0);
+  const targetSeconds = formatSeconds(result.durationPerQuestionMs);
   return (
     <>
       <p className="results__legend">

@@ -91,3 +91,16 @@ describe('ResultsScreen — screen mode unchanged', () => {
     expect(screen.queryByRole('button', { name: /Enregistrer/ })).toBeNull();
   });
 });
+
+describe('ResultsScreen — target legend', () => {
+  test('shows a half-second target as is, not rounded up (#38)', () => {
+    render(
+      <ResultsScreen
+        result={{ ...screenResult, durationPerQuestionMs: 2500 }}
+        onReplay={noop}
+        onHome={noop}
+      />,
+    );
+    expect(screen.getByText(/Cible : 2\.5s/)).toBeInTheDocument();
+  });
+});
