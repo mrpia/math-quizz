@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { SessionResult, AnswerRecord } from '../domain/session';
 import { totalScore } from '../domain/scoring';
-import { formatSeconds } from '../domain/format';
+import { formatPoints, formatSeconds } from '../domain/format';
 import { useI18n } from '../i18n/I18nContext';
 import './ResultsScreen.css';
 
@@ -35,9 +35,6 @@ const ICON: Record<Kind, string> = {
   wrong: '❌',
   timeout: '⏰',
 };
-
-const formatPoints = (n: number): string =>
-  Number.isInteger(n) ? n.toString() : n.toFixed(1);
 
 const ScreenResults = ({ result }: { result: SessionResult }) => {
   const { t } = useI18n();
