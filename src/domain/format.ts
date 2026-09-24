@@ -18,3 +18,18 @@ export const formatSeconds = (ms: number): string =>
  * absorbs the float noise of summing credits (0.1 + 0.2).
  */
 export const formatPoints = (n: number): string => Number(n.toFixed(2)).toString();
+
+/**
+ * Elapsed time on the running timer, in seconds: "0.0", "3.7", "2.26".
+ *
+ * Rounded **up**, so the shown number passes the target exactly when scoring
+ * (`elapsedMs <= durationPerQuestionMs`) turns slow. `toFixed(1)` showed "4.0"
+ * for 4.04 s, an answer scored slow (#48). The step is a tenth when the target
+ * sits on that grid (every 0.5-step value does) and a hundredth otherwise, so
+ * a 2.25 s target does not read "2.3" while the answer still counts as fast.
+ */
+export const formatElapsed = (ms: number, targetMs: number): string => {
+  const stepMs = targetMs % 100 === 0 ? 100 : 10;
+  const shownMs = Math.ceil(ms / stepMs) * stepMs;
+  return (shownMs / 1000).toFixed(stepMs === 100 ? 1 : 2);
+};

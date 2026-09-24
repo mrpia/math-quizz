@@ -99,7 +99,9 @@ export const SessionScreen = ({ profileId, settings, onComplete, onCancel }: Pro
         </div>
         <Timer
           targetMs={settings.durationPerQuestionMs}
-          resetKey={index}
+          // Read in render on purpose: `submit` sets it together with
+          // `setIndex`, so every question change re-renders with the new value.
+          startedAt={questionStartRef.current}
         />
       </div>
       <QuestionCard question={current} given={given} />
