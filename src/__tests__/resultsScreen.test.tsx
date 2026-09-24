@@ -104,3 +104,18 @@ describe('ResultsScreen — target legend', () => {
     expect(screen.getByText(/Cible : 2\.5s/)).toBeInTheDocument();
   });
 });
+
+describe('ResultsScreen — partial credit precision (#39)', () => {
+  test('a 0.25 credit is shown as 0.25 in the score and the legend, not 0.3', () => {
+    const quarter: SessionResult = {
+      ...screenResult,
+      durationPerQuestionMs: 1000,
+      partialCreditFactor: 0.25,
+      questionCount: 1,
+      answers: [{ question: q(7, 8), given: 56, elapsedMs: 2000 }],
+    };
+    render(<ResultsScreen result={quarter} onReplay={noop} onHome={noop} />);
+    expect(screen.getByTestId('results-score')).toHaveTextContent('0.25 / 1');
+    expect(screen.getByText(/0\.25 pt/)).toBeInTheDocument();
+  });
+});

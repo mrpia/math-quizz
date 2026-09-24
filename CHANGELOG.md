@@ -15,6 +15,12 @@ and the project uses [Semantic Versioning](https://semver.org/).
   now go through one `formatSeconds` helper in `src/domain/format.ts`. It keeps
   up to two decimals, because the Settings input's 0.5 step is only a hint and a
   typed or imported 2250 ms is valid.
+- **Quarter-point credit was shown rounded to the tenth** (#39). The results
+  score and legend formatted points with `toFixed(1)`, so a 0.25 slow-answer
+  credit read "0.3 / 1" and "0.3 pt". Stored points were always exact. Points
+  now go through `formatPoints` in `src/domain/format.ts`, which keeps two
+  decimals like `formatSeconds`: the Settings input's 0.1 step is only a hint,
+  and neither Settings nor the backup import rounds the factor.
 
 ## [1.1.0] - 2026-09-23
 
