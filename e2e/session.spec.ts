@@ -79,6 +79,43 @@ test('a session can be answered on the pad and on the keyboard', async ({ page }
   await expect(page.getByTestId('results-score')).toHaveText('2 / 2');
 });
 
+test('a slow answer earns partial credit on a real clock', async ({ page }) => {
+  // The timer test below proves the display ticks; this one proves the
+  // threshold is applied to a time nobody faked. Vitest mocks
+  // `performance.now()`, so it cannot tell whether scoring and the clock agree.
+  await seed(page, {
+    selectedTables: [7],
+    mode: 'mul',
+    answerMode: 'screen',
+    questionCount: 2,
+    durationPerQuestionMs: 1000,
+    partialCreditFactor: 0.5,
+    language: 'fr',
+  });
+
+  await page.goto('/');
+  await page.getByTestId('start-session').click();
+
+  const operation = page.getByTestId('question-operation');
+
+  // 1 — answered straight away, well inside the 1 s target.
+  const first = await readQuestion(page);
+  await page.keyboard.type(String(first.answer));
+  await page.keyboard.press('Enter');
+
+  // 2 — held until the timer reads about 1.8 s. Waiting on the display rather
+  // than a fixed sleep keeps the answer late however slowly the page renders.
+  await expect(operation).not.toHaveText(first.text);
+  const second = await readQuestion(page);
+  await expect(page.getByTestId('session-timer')).toHaveText(/^(1\.[89]|[2-9]\.\d)s$/);
+  await page.keyboard.type(String(second.answer));
+  await page.keyboard.press('Enter');
+
+  await expect(page.getByTestId('results-score')).toHaveText('1.5 / 2');
+  await expect(page.getByTestId('results-row-ok')).toHaveCount(1);
+  await expect(page.getByTestId('results-row-slow')).toHaveCount(1);
+});
+
 test('the timer runs on a real clock', async ({ page }) => {
   await seed(page, {
     selectedTables: [7],

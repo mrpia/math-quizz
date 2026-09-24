@@ -50,7 +50,11 @@ const ScreenResults = ({ result }: { result: SessionResult }) => {
           const kind = classify(record, result.durationPerQuestionMs);
           const elapsed = (record.elapsedMs / 1000).toFixed(1);
           return (
-            <li key={i} className={`results__row results__row--${kind}`}>
+            <li
+              key={i}
+              className={`results__row results__row--${kind}`}
+              data-testid={`results-row-${kind}`}
+            >
               <span className="results__icon" aria-hidden>
                 {ICON[kind]}
               </span>

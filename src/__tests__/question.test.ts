@@ -67,6 +67,19 @@ describe('generateQuestions', () => {
     expect(ops.has('div')).toBe(true);
   });
 
+  test.each(['mul', 'div', 'mix'] as const)(
+    'mode "%s": asking for the whole pool over several tables yields every pair exactly once',
+    (mode) => {
+      const selectedTables = [2, 7, 12, 25];
+      const questions = generateQuestions(
+        baseSettings({ selectedTables, mode, questionCount: selectedTables.length * MULTIPLIERS.length }),
+      );
+      const drawn = questions.map((q) => `${q.a}×${q.b}`).sort();
+      const pool = selectedTables.flatMap((a) => MULTIPLIERS.map((b) => `${a}×${b}`)).sort();
+      expect(drawn).toEqual(pool);
+    },
+  );
+
   test('pool smaller than questionCount: returns questionCount questions with repetitions', () => {
     // 1 selected table * 11 multipliers = 11 distinct couples
     const questions = generateQuestions(
