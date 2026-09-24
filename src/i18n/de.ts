@@ -111,10 +111,19 @@ export const de: Record<TranslationKey, string> = {
   'settings.export': 'Meine Daten exportieren',
   'settings.exportDone': 'Datei exportiert',
   'settings.import': 'Datei importieren',
-  'settings.importConfirm': 'Deine Daten durch diese Datei ersetzen?',
+  'settings.importConfirm': 'Diese Datei importieren?',
   'settings.importSummary': 'Tests: {sessions} · Übungen: {training} · Paare: {pairs}',
   'settings.importWarning':
     'Die Einstellungen und Ergebnisse von « {name} » werden ersetzt.',
+  'settings.importMode': 'Was passiert mit deinen jetzigen Ergebnissen?',
+  'settings.importModeReplace': 'Ersetzen',
+  'settings.importModeMerge': 'Hinzufügen',
+  'settings.importMergeWarning':
+    'Die Ergebnisse aus dieser Datei kommen zu denen von « {name} » dazu. Die Einstellungen bleiben, wie sie sind.',
+  'settings.importMergeSummary': 'Neue Runden: {added} · Schon da: {known}',
+  'settings.importMergeDropped':
+    'Behalten werden höchstens {limit} Tests und {limit} Übungen. Entfernt, weil älter: {dropped}',
+  'settings.mergeDone': 'Ergebnisse hinzugefügt',
   'settings.importYes': 'Ja, importieren',
   'settings.importDone': 'Daten importiert',
   'settings.importErrorUnreadable': 'Diese Datei ist nicht lesbar.',

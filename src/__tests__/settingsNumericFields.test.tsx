@@ -41,6 +41,7 @@ const renderSettings = () => {
       onClearHistory={() => {}}
       onExport={exportStub}
       onImport={() => {}}
+      onPreviewMerge={() => ({ added: 0, known: 0, dropped: 0 })}
       onBack={() => {}}
     />,
     'fr',

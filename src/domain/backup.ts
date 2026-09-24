@@ -160,6 +160,7 @@ const isAnswerRecord = (value: unknown): value is AnswerRecord =>
 
 const isSessionResult = (value: unknown): value is SessionResult =>
   isRecord(value) &&
+  (value.id === undefined || (isString(value.id) && value.id !== '')) &&
   isString(value.startedAt) &&
   isNumber(value.durationPerQuestionMs) &&
   isNumber(value.partialCreditFactor) &&

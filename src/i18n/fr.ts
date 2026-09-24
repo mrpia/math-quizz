@@ -108,10 +108,19 @@ export const fr = {
   'settings.export': 'Exporter mes données',
   'settings.exportDone': 'Fichier exporté',
   'settings.import': 'Importer un fichier',
-  'settings.importConfirm': 'Remplacer tes données par ce fichier ?',
+  'settings.importConfirm': 'Importer ce fichier ?',
   'settings.importSummary': 'Tests : {sessions} · Entraînements : {training} · Paires : {pairs}',
   'settings.importWarning':
     'Les réglages et les résultats de « {name} » seront remplacés.',
+  'settings.importMode': 'Que faire de tes résultats actuels ?',
+  'settings.importModeReplace': 'Remplacer',
+  'settings.importModeMerge': 'Ajouter',
+  'settings.importMergeWarning':
+    "Les résultats de ce fichier s'ajoutent à ceux de « {name} ». Ses réglages ne changent pas.",
+  'settings.importMergeSummary': 'Nouvelles sessions : {added} · Déjà là : {known}',
+  'settings.importMergeDropped':
+    'On garde au plus {limit} tests et {limit} entraînements. Retirées car plus anciennes : {dropped}',
+  'settings.mergeDone': 'Résultats ajoutés',
   'settings.importYes': 'Oui, importer',
   'settings.importDone': 'Données importées',
   'settings.importErrorUnreadable': "Ce fichier n'est pas lisible.",

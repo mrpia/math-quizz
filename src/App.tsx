@@ -11,6 +11,7 @@ import { ProgressScreen } from './screens/ProgressScreen';
 import { InfoScreen } from './screens/InfoScreen';
 import type { SessionResult, Settings } from './domain/session';
 import type { Backup } from './domain/backup';
+import type { ImportMode } from './domain/merge';
 import {
   loadRegistry,
   saveRegistry,
@@ -25,6 +26,7 @@ import {
   recordTrainingSession,
   exportProfile,
   importProfile,
+  previewMerge,
   clearAll,
 } from './storage/profileStore';
 
@@ -102,12 +104,13 @@ export const App = () => {
     setScreen('results');
   };
 
-  const handleImport = (targetId: string, backup: Backup) => {
+  const handleImport = (targetId: string, backup: Backup, mode: ImportMode) => {
     // Storage first: if the browser refuses the write, the screen reports it
     // and React state still matches what is actually stored.
-    importProfile(targetId, backup);
-    // Importing into some *other* profile must not disturb the one in use.
-    if (targetId === activeId) setSettings(backup.data.settings);
+    importProfile(targetId, backup, mode);
+    // Importing into some *other* profile must not disturb the one in use,
+    // and a merge keeps the destination's settings, so only a replace here.
+    if (mode === 'replace' && targetId === activeId) setSettings(backup.data.settings);
   };
 
   const activeName = findProfile(registry, activeId)?.name ?? '';
@@ -180,6 +183,7 @@ export const App = () => {
               exportProfile(profileId, __APP_VERSION__, profileName)
             }
             onImport={handleImport}
+            onPreviewMerge={previewMerge}
             onBack={() => setScreen('home')}
           />
         )}

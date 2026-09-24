@@ -14,6 +14,7 @@ import {
   HISTORY_LIMIT,
   storageKeys,
   loadPairStats,
+  previewMerge,
 } from '../storage/profileStore';
 import { DEFAULT_SETTINGS } from '../domain/session';
 import type { SessionResult } from '../domain/session';
@@ -158,7 +159,7 @@ describe('the abandoned lifetime error counters', () => {
 
   test('importProfile drops it too, so nothing stale outlives a restore', () => {
     localStorage.setItem(LEGACY_ERRORS_KEY, JSON.stringify(legacy()));
-    importProfile('default', exportProfile('default', '0.11.0'));
+    importProfile('default', exportProfile('default', '0.11.0'), 'replace');
     expect(localStorage.getItem(LEGACY_ERRORS_KEY)).toBeNull();
   });
 });
@@ -181,7 +182,7 @@ describe('training history', () => {
   test('recordTrainingSession appends to training history, not the test history', () => {
     const s: SessionResult = { ...mkSession(0), answerMode: 'training' };
     recordTrainingSession('default', s);
-    expect(loadTrainingHistory('default')).toEqual([s]);
+    expect(loadTrainingHistory('default')).toEqual([{ ...s, id: expect.any(String) }]);
     expect(loadHistory('default')).toEqual([]);
   });
 
@@ -299,7 +300,7 @@ describe('export / import', () => {
     incoming.data.history = [mkSession(9)];
     incoming.data.trainingHistory = [];
 
-    importProfile('default', incoming);
+    importProfile('default', incoming, 'replace');
 
     expect(loadSettings('default').questionCount).toBe(33);
     expect(loadHistory('default')).toEqual([mkSession(9)]);
@@ -313,10 +314,10 @@ describe('export / import', () => {
 
     clearAll('default');
     saveSettings('default', DEFAULT_SETTINGS);
-    importProfile('default', backup);
+    importProfile('default', backup, 'replace');
 
     expect(loadSettings('default').questionCount).toBe(11);
-    expect(loadHistory('default')).toEqual([mkSession(1)]);
+    expect(loadHistory('default')).toEqual([{ ...mkSession(1), id: expect.any(String) }]);
   });
 
   it('trims an oversized incoming history to HISTORY_LIMIT, keeping the newest', () => {
@@ -324,7 +325,7 @@ describe('export / import', () => {
     backup.data.history = Array.from({ length: HISTORY_LIMIT + 5 }, (_, i) => mkSession(i));
     backup.data.trainingHistory = Array.from({ length: HISTORY_LIMIT + 5 }, (_, i) => mkSession(i));
 
-    importProfile('default', backup);
+    importProfile('default', backup, 'replace');
 
     const history = loadHistory('default');
     expect(history).toHaveLength(HISTORY_LIMIT);
@@ -397,9 +398,135 @@ describe('exportProfile / importProfile across profiles', () => {
     recordSession('p2', mkSession(1));
     const fromTom = exportProfile('p2', '0.12.0', 'Tom');
 
-    importProfile('default', fromTom);
+    importProfile('default', fromTom, 'replace');
 
     expect(loadSettings('default').questionCount).toBe(33);
     expect(loadHistory('default')).toHaveLength(1);
+  });
+});
+
+describe('session ids (#18)', () => {
+  it('recordSession stamps an id, so a later merge can match it', () => {
+    recordSession('default', mkSession(1));
+    expect(loadHistory('default')[0].id).toMatch(/^[0-9a-f]{32}$/);
+  });
+
+  it('recordTrainingSession stamps one too', () => {
+    recordTrainingSession('default', { ...mkSession(1), answerMode: 'training' });
+    expect(loadTrainingHistory('default')[0].id).toMatch(/^[0-9a-f]{32}$/);
+  });
+
+  it('two sessions recorded the same second get different ids', () => {
+    recordSession('default', mkSession(1));
+    recordSession('default', mkSession(1));
+    const [first, second] = loadHistory('default');
+    expect(first.id).not.toBe(second.id);
+  });
+
+  it('keeps an id the session already carries', () => {
+    recordSession('default', { ...mkSession(1), id: 'given' });
+    expect(loadHistory('default')[0].id).toBe('given');
+  });
+
+  it('never backfills an id on a session stored without one', () => {
+    // Same old session on two devices, two random ids: they would stop matching.
+    appendSession('default', mkSession(1));
+    recordSession('default', mkSession(2));
+    expect(loadHistory('default')[0]).not.toHaveProperty('id');
+  });
+});
+
+describe('importProfile — merge (#18)', () => {
+  const fileWith = (history: SessionResult[], trainingHistory: SessionResult[] = []) => {
+    const backup = exportProfile('p2', '1.2.0', 'Tom');
+    backup.data.settings = { ...DEFAULT_SETTINGS, questionCount: 33 };
+    backup.data.history = history;
+    backup.data.trainingHistory = trainingHistory;
+    return backup;
+  };
+
+  it('adds the sessions this profile lacks, in startedAt order', () => {
+    recordSession('default', { ...mkSession(1), id: 'a' });
+    recordSession('default', { ...mkSession(5), id: 'c' });
+
+    importProfile('default', fileWith([{ ...mkSession(3), id: 'b' }]), 'merge');
+
+    expect(loadHistory('default').map((s) => s.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('skips sessions already here, so importing the same file twice is harmless', () => {
+    recordSession('default', mkSession(1));
+    const own = exportProfile('default', '1.2.0');
+
+    importProfile('default', own, 'merge');
+    importProfile('default', own, 'merge');
+
+    expect(loadHistory('default')).toHaveLength(1);
+  });
+
+  it('matches sessions without ids on startedAt and answer count', () => {
+    appendSession('default', mkSession(1));
+    importProfile('default', fileWith([mkSession(1), mkSession(2)]), 'merge');
+    expect(loadHistory('default')).toEqual([mkSession(1), mkSession(2)]);
+  });
+
+  it('merges training on its own, never mixing it into tests', () => {
+    recordSession('default', { ...mkSession(1), id: 'test' });
+    const training = { ...mkSession(2), id: 'train', answerMode: 'training' as const };
+
+    importProfile('default', fileWith([], [training]), 'merge');
+
+    expect(loadHistory('default').map((s) => s.id)).toEqual(['test']);
+    expect(loadTrainingHistory('default').map((s) => s.id)).toEqual(['train']);
+  });
+
+  it('keeps the settings of the destination profile', () => {
+    saveSettings('default', { ...DEFAULT_SETTINGS, questionCount: 11 });
+    importProfile('default', fileWith([mkSession(2)]), 'merge');
+    expect(loadSettings('default').questionCount).toBe(11);
+  });
+
+  it('keeps the newest HISTORY_LIMIT sessions overall', () => {
+    for (let i = 0; i < HISTORY_LIMIT; i++) appendSession('default', mkSession(i * 2));
+    const newer = Array.from({ length: 10 }, (_, i) => mkSession(i * 2 + 1 + 80));
+
+    importProfile('default', fileWith(newer), 'merge');
+
+    const history = loadHistory('default');
+    expect(history).toHaveLength(HISTORY_LIMIT);
+    expect(history.at(-1)).toEqual(newer.at(-1));
+    expect(history[0]).toEqual(mkSession(20));
+  });
+
+  it('drops the legacy error counters, as a replace does', () => {
+    localStorage.setItem(LEGACY_ERRORS_KEY, '{}');
+    importProfile('default', fileWith([]), 'merge');
+    expect(localStorage.getItem(LEGACY_ERRORS_KEY)).toBeNull();
+  });
+
+  it('writes nothing to any other profile', () => {
+    recordSession('p2', mkSession(1));
+    importProfile('default', fileWith([mkSession(2)]), 'merge');
+    expect(loadHistory('p2')).toHaveLength(1);
+  });
+});
+
+describe('previewMerge', () => {
+  it('counts, before anything is written, what a merge would do', () => {
+    for (let i = 0; i < HISTORY_LIMIT; i++) appendSession('default', mkSession(i));
+    const backup = exportProfile('default', '1.2.0');
+    backup.data.history = [mkSession(0), mkSession(200), mkSession(201)];
+    backup.data.trainingHistory = [{ ...mkSession(3), answerMode: 'training' }];
+    const before = localStorage.getItem(storageKeys('default').history);
+
+    expect(previewMerge('default', backup)).toEqual({ added: 3, known: 1, dropped: 2 });
+    expect(localStorage.getItem(storageKeys('default').history)).toBe(before);
+  });
+
+  it('is measured against the profile it is asked about', () => {
+    recordSession('p2', { ...mkSession(1), id: 'x' });
+    const backup = exportProfile('p2', '1.2.0');
+    expect(previewMerge('p2', backup)).toMatchObject({ added: 0, known: 1 });
+    expect(previewMerge('default', backup)).toMatchObject({ added: 1, known: 0 });
   });
 });

@@ -1,8 +1,11 @@
+import { newSessionId } from '../domain/session';
 import type { Settings, SessionResult } from '../domain/session';
 import { createBackup, sanitizeSettings } from '../domain/backup';
 import { aggregatePairs, chronological, trackedSessions } from '../domain/stats';
 import type { PairCounterMap } from '../domain/stats';
 import type { Backup } from '../domain/backup';
+import { mergeHistories, sumMerges } from '../domain/merge';
+import type { ImportMode, MergeCounts } from '../domain/merge';
 
 /**
  * Everything one profile owns, addressed by id.
@@ -74,8 +77,15 @@ export const appendSession = (profileId: string, session: SessionResult): void =
   localStorage.setItem(storageKeys(profileId).history, JSON.stringify(next));
 };
 
+/**
+ * The moment a session gets its id (#18). Only here, never on load or import:
+ * a session stored without one keeps matching on `startedAt` instead.
+ */
+const stamped = (session: SessionResult): SessionResult =>
+  session.id === undefined ? { id: newSessionId(), ...session } : session;
+
 export const recordSession = (profileId: string, session: SessionResult): void => {
-  appendSession(profileId, session);
+  appendSession(profileId, stamped(session));
 };
 
 export const loadTrainingHistory = (profileId: string): SessionResult[] =>
@@ -88,7 +98,9 @@ export const recordTrainingSession = (
   profileId: string,
   session: SessionResult,
 ): void => {
-  const next = [...loadTrainingHistory(profileId), session].slice(-HISTORY_LIMIT);
+  const next = [...loadTrainingHistory(profileId), stamped(session)].slice(
+    -HISTORY_LIMIT,
+  );
   localStorage.setItem(
     storageKeys(profileId).trainingHistory,
     JSON.stringify(next),
@@ -133,26 +145,61 @@ export const exportProfile = (
     },
   );
 
+const merges = (profileId: string, backup: Backup) => ({
+  history: mergeHistories(loadHistory(profileId), backup.data.history, HISTORY_LIMIT),
+  trainingHistory: mergeHistories(
+    loadTrainingHistory(profileId),
+    backup.data.trainingHistory,
+    HISTORY_LIMIT,
+  ),
+});
+
 /**
- * Overwrites one profile with a validated backup — a restore, not a merge.
- * Merging is deliberately out of scope: sessions carry no id, so two files
- * recorded on two devices cannot be reconciled without guessing from
- * `startedAt`. Throws if storage refuses the write (quota, private mode).
+ * What `importProfile(…, 'merge')` would do to this profile, without writing
+ * anything: the import dialog shows it, so a merge that pushes old sessions
+ * out past the cap says so instead of implying everything was kept.
+ */
+export const previewMerge = (profileId: string, backup: Backup): MergeCounts => {
+  const { history, trainingHistory } = merges(profileId, backup);
+  return sumMerges(history, trainingHistory);
+};
+
+/**
+ * Writes a validated backup into one profile, in one of two ways. `mode` has
+ * no default, for the same reason `profileId` has none: the caller must say
+ * which, so no screen can overwrite a profile by leaving an argument out.
+ *
+ * - **replace** — a restore. Settings and both histories become the file's.
+ * - **merge** (#18) — both histories keep what is here and gain the sessions
+ *   the file adds, matched by `sessionKey`, sorted by `startedAt`, capped at
+ *   `HISTORY_LIMIT`. Settings stay the destination's: the file brings results,
+ *   and this device's preferences are not the file's to change.
  *
  * `profileId` is the *destination* the user picked, never `backup.profile`:
  * the id inside the file names a profile on the machine that wrote it, which
- * may mean something else here, or nothing at all.
+ * may mean something else here, or nothing at all. Throws if storage refuses
+ * the write (quota, private mode).
  */
-export const importProfile = (profileId: string, backup: Backup): void => {
-  const { settings, history, trainingHistory } = backup.data;
+export const importProfile = (
+  profileId: string,
+  backup: Backup,
+  mode: ImportMode,
+): void => {
   const keys = storageKeys(profileId);
-  saveSettings(profileId, settings);
-  // A hand-written file may carry more than the app itself would keep.
-  localStorage.setItem(keys.history, JSON.stringify(history.slice(-HISTORY_LIMIT)));
-  localStorage.setItem(
-    keys.trainingHistory,
-    JSON.stringify(trainingHistory.slice(-HISTORY_LIMIT)),
-  );
+  let history: SessionResult[];
+  let trainingHistory: SessionResult[];
+  if (mode === 'merge') {
+    const merged = merges(profileId, backup);
+    history = merged.history.merged;
+    trainingHistory = merged.trainingHistory.merged;
+  } else {
+    saveSettings(profileId, backup.data.settings);
+    // A hand-written file may carry more than the app itself would keep.
+    history = backup.data.history.slice(-HISTORY_LIMIT);
+    trainingHistory = backup.data.trainingHistory.slice(-HISTORY_LIMIT);
+  }
+  localStorage.setItem(keys.history, JSON.stringify(history));
+  localStorage.setItem(keys.trainingHistory, JSON.stringify(trainingHistory));
   // A v1 file may carry the deprecated `errors` section; it is validated on
   // read and then dropped, since nothing derives statistics from it any more.
   localStorage.removeItem(legacyErrorsKey(profileId));

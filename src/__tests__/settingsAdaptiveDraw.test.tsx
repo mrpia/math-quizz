@@ -33,6 +33,7 @@ const renderSettings = (settings: Settings, onSave = vi.fn(), onBack = vi.fn()) 
       onClearHistory={() => {}}
       onExport={exportStub}
       onImport={() => {}}
+      onPreviewMerge={() => ({ added: 0, known: 0, dropped: 0 })}
       onBack={onBack}
     />,
     'fr',

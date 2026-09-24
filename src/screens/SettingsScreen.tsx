@@ -16,6 +16,9 @@ import type { TranslationKey } from '../i18n/types';
 import { LanguageToggle } from '../components/LanguageToggle';
 import { AdaptiveDrawToggle } from '../components/AdaptiveDrawToggle';
 import { ProfileManager } from '../components/ProfileManager';
+import { ImportModeToggle } from '../components/ImportModeToggle';
+import type { ImportMode, MergeCounts } from '../domain/merge';
+import { HISTORY_LIMIT } from '../storage/profileStore';
 import { findProfile, profileLabel } from '../storage/profileRegistry';
 import type { ProfileRegistry } from '../storage/profileRegistry';
 import './SettingsScreen.css';
@@ -30,7 +33,9 @@ type Props = {
   /** Snapshot of one profile, ready to be written to a file. */
   onExport: (profileId: string, profileName: string) => Backup;
   /** Overwrites the named profile. May throw if the browser refuses the write. */
-  onImport: (profileId: string, backup: Backup) => void;
+  onImport: (profileId: string, backup: Backup, mode: ImportMode) => void;
+  /** What a merge into `profileId` would add, keep and drop. Writes nothing. */
+  onPreviewMerge: (profileId: string, backup: Backup) => MergeCounts;
   onBack: () => void;
 };
 
@@ -66,6 +71,7 @@ export const SettingsScreen = ({
   onClearHistory,
   onExport,
   onImport,
+  onPreviewMerge,
   onBack,
 }: Props) => {
   // Held as the text in the field, not as numbers: a number state turns an
@@ -78,6 +84,9 @@ export const SettingsScreen = ({
   // Where a picked file will land. Defaults to the profile in use; the picker
   // below only appears once there is somewhere else it could go.
   const [importTarget, setImportTarget] = useState(registry.active);
+  // Replace is the default: it is what import has always done, and a merge
+  // is a choice the dialog asks for rather than a behaviour it slips in (#18).
+  const [importMode, setImportMode] = useState<ImportMode>('replace');
   const [notice, setNotice] = useState<Notice | null>(null);
   const { t } = useI18n();
 
@@ -140,13 +149,14 @@ export const SettingsScreen = ({
     // Valid, but nothing is written until the confirmation below.
     setNotice(null);
     setImportTarget(registry.active);
+    setImportMode('replace');
     setPendingImport(result.backup);
   };
 
   const confirmImport = () => {
     if (!pendingImport) return;
     try {
-      onImport(importTarget, pendingImport);
+      onImport(importTarget, pendingImport, importMode);
     } catch {
       setPendingImport(null);
       setNotice({ kind: 'error', key: 'settings.importErrorStorage' });
@@ -157,18 +167,27 @@ export const SettingsScreen = ({
     // pre-import values, and the next "Enregistrer" writes those stale numbers
     // back over what was just imported. Only when the file landed in the
     // profile being edited, though — importing into another one must leave
-    // this form exactly as it was.
-    if (importTarget === registry.active) {
+    // this form exactly as it was. A merge brings no settings, so it never does.
+    if (importMode === 'replace' && importTarget === registry.active) {
       const imported = pendingImport.data.settings;
       setSeconds(String(imported.durationPerQuestionMs / 1000));
       setCount(String(imported.questionCount));
       setPartial(String(imported.partialCreditFactor));
     }
     setPendingImport(null);
-    setNotice({ kind: 'info', key: 'settings.importDone' });
+    setNotice({
+      kind: 'info',
+      key: importMode === 'merge' ? 'settings.mergeDone' : 'settings.importDone',
+    });
   };
 
   const summary = pendingImport ? summarizeBackup(pendingImport) : null;
+  // Recomputed on every render, so it follows the destination picker. Cheap:
+  // two histories of at most HISTORY_LIMIT sessions each.
+  const mergeCounts =
+    pendingImport && importMode === 'merge'
+      ? onPreviewMerge(importTarget, pendingImport)
+      : null;
 
   return (
     <div className="settings">
@@ -328,9 +347,35 @@ export const SettingsScreen = ({
                 </select>
               </label>
             )}
-            <p className="settings__hint">
-              {t('settings.importWarning', { name: nameOf(importTarget) })}
-            </p>
+            <div className="settings__field">
+              <span className="settings__label">{t('settings.importMode')}</span>
+              <ImportModeToggle value={importMode} onChange={setImportMode} />
+            </div>
+            {mergeCounts ? (
+              <>
+                <p className="settings__hint">
+                  {t('settings.importMergeWarning', { name: nameOf(importTarget) })}
+                </p>
+                <p className="settings__hint">
+                  {t('settings.importMergeSummary', {
+                    added: mergeCounts.added,
+                    known: mergeCounts.known,
+                  })}
+                </p>
+                {mergeCounts.dropped > 0 && (
+                  <p className="settings__hint">
+                    {t('settings.importMergeDropped', {
+                      limit: HISTORY_LIMIT,
+                      dropped: mergeCounts.dropped,
+                    })}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="settings__hint">
+                {t('settings.importWarning', { name: nameOf(importTarget) })}
+              </p>
+            )}
             <div className="settings__confirm-row">
               <button
                 type="button"

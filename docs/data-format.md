@@ -66,8 +66,9 @@ tablet. **A backup covers exactly one of them.** The list of who exists lives at
 `mathquizz:profiles`, outside every profile prefix, and is deliberately *not*
 part of the file:
 
-- importing never creates, renames or deletes a profile. It overwrites one
-  destination, chosen in the import dialog (default: the profile in use);
+- importing never creates, renames or deletes a profile. It writes into one
+  destination, chosen in the import dialog (default: the profile in use),
+  either replacing its data or merging into it;
 - so a file from another device can never rearrange this device's profiles, and
   a hand-edited file cannot conjure one into being;
 - to move a sibling's data onto a new device you create the profile first, then
@@ -126,6 +127,14 @@ versions never save one, and the app leaves any `answerMode: "paper"` session
 still in `history` out of the score chart, the pair statistics and the
 question draw. Such sessions stay valid in an export and import unchanged.
 
+**Session ids are never backfilled.** Since 1.2.0 the app stamps each session
+with a random `id` (32 hex characters) when it records it. Sessions recorded
+earlier have none and keep having none. If each device gave the same old
+session its own random id, the two copies would stop matching, so a merge
+matches those on `startedAt` plus answer count instead. That fallback is
+unique only by luck, and it is the best an old file allows. If you write
+sessions yourself, give each new one a fresh id and never reuse one.
+
 **A `null` `given` outside paper mode is legacy data.** Older versions cut a
 screen question off when time ran out and stored `given: null`. No current mode
 does that: a screen question waits for an answer however long it takes. Exports
@@ -134,8 +143,28 @@ as timeouts.
 
 ## How the importer treats a file
 
-Import is a **restore, not a merge**: each section replaces the one in the
-browser. Nothing is written until the confirmation dialog is accepted.
+The import dialog offers two modes, and nothing is written until it is
+confirmed:
+
+- **Replace** (the default) is a restore. Settings and both histories become the
+  file's.
+- **Merge** (since 1.2.0) keeps what the destination profile already holds and
+  adds the sessions the file brings. Settings stay the destination's: the file
+  contributes results, not preferences. Each history is merged on its own:
+  1. a session from the file is skipped when the destination already holds it,
+     matched on `id`, or on `startedAt` plus the number of answers for
+     sessions that have no id;
+  2. the combined history is sorted by `startedAt`. This matters because
+     statistics weight a session by its **position**, so an unsorted
+     concatenation would decay the wrong sessions;
+  3. it is trimmed to the newest 50, the same cap as every write. A merge can
+     therefore drop older sessions, from the file or from the device. The
+     dialog shows how many will be added, how many are already there and how
+     many the cap will remove before you confirm.
+
+  Merging the same file twice changes nothing the second time. Since every
+  statistic is derived from the histories, merging them merges the statistics;
+  there is no other store to reconcile.
 
 Structure and settings are handled by deliberately different rules:
 
@@ -217,9 +246,10 @@ default.
 
 The schema and the importer agree on structure, and differ only where the
 importer is deliberately more forgiving: a validator fails a settings value
-outside its declared range, while the importer clamps it. Two behaviours the
+outside its declared range, while the importer clamps it. Three behaviours the
 schema does not express at all: the 50-entry trim on `history` /
-`trainingHistory`, and the dropping of unknown envelope fields.
+`trainingHistory`, the dropping of unknown envelope fields, and how a merge
+matches and orders sessions.
 
 ## Changing the format
 

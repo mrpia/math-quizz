@@ -8,6 +8,25 @@ and the project uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Merge on import** (#18). The import dialog now asks **Remplacer** or
+  **Ajouter** (default: Remplacer, the old behaviour). A merge keeps the
+  destination's settings and, per history, skips sessions already present,
+  sorts the rest in by `startedAt` and trims to `HISTORY_LIMIT`
+  (`domain/merge.ts` → `mergeHistories`). Sorting is required, not cosmetic:
+  `aggregatePairs` weights by position. `previewMerge` (`profileStore.ts`)
+  computes added / already-here / dropped counts without writing, and the
+  dialog shows the dropped count whenever the cap removes something, from
+  either side. `importProfile` takes a required `mode` argument, with no
+  default, for the same reason the profile id has none.
+- **Session ids.** `recordSession` / `recordTrainingSession` stamp an optional
+  `SessionResult.id` (128 random bits, hex, via `crypto.getRandomValues`;
+  `randomUUID` is missing outside a secure context, e.g. the dev server over
+  the LAN). Existing sessions are never backfilled, because two devices would
+  give the same old session different ids. They match on `startedAt` plus answer
+  count instead. Backup format: `id` is an additive optional field, so
+  `formatVersion` stays 1. An `id` that is present but not a non-empty string
+  makes the file `corrupt`. No released version wrote the field, so this
+  narrows nothing that exists in the wild.
 - **⭐ for a completed table on the heat-map** (#59). A row header gets a star
   when every pair in that table has at least `CONFIDENT_MIN_ATTEMPTS` (3) raw
   attempts and a weighted rate below `REVIEW_MIN_RATE`. Rows are
