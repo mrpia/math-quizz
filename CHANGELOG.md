@@ -19,6 +19,15 @@ and the project uses [Semantic Versioning](https://semver.org/).
   154 entries to 99 facts, so a session only repeats a fact past 99 questions.
 
 ### Fixed
+- **One old miss kept a pair in "Paires à revoir" forever** (#43).
+  `trickiestPairs` kept any pair with a weighted failure rate above zero, and
+  recency weights halve every ten sessions but never reach zero. A child who
+  missed 2 × 5 once and has answered it right twenty times since still saw it
+  listed, under a `heat--0` bar. The list now needs a weighted rate of at least
+  `REVIEW_MIN_RATE` (0.08, in `src/domain/progress.ts`), which is also where
+  `rateBucket` ends the "rare" colour, so the list and the heat-map agree. With
+  one hit per session, a single miss drops off after about nine sessions,
+  roughly one half-life.
 - **Half-second targets were shown rounded up** (#38). The timer label and the
   results legend formatted the target with `toFixed(0)`, so a 2.5 s target read
   "cible 3s" while scoring applied 2500 ms. A 2.7 s answer was then marked slow
