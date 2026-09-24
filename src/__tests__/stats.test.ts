@@ -6,6 +6,7 @@ import {
   weightedErrorRate,
   RECENCY_HALF_LIFE_SESSIONS,
   chronological,
+  trackedSessions,
 } from '../domain/stats';
 import { HISTORY_LIMIT } from '../storage/profileStore';
 import type { SessionResult } from '../domain/session';
@@ -300,5 +301,21 @@ describe('chronological', () => {
     expect(
       chronological([at(same, 1), at(same, 2)], [at(same, 3)]).map((s) => s.questionCount),
     ).toEqual([1, 2, 3]);
+  });
+});
+
+describe('trackedSessions (#44)', () => {
+  test('drops paper sessions and keeps screen, training and legacy ones in order', () => {
+    const tag = (answerMode: SessionResult['answerMode'], n: number): SessionResult => ({
+      ...mkSession([]),
+      answerMode,
+      questionCount: n,
+    });
+    const legacy = { ...mkSession([]), questionCount: 4 }; // stored before answerMode existed
+    expect(
+      trackedSessions([tag('screen', 1), tag('paper', 2), tag('training', 3), legacy]).map(
+        (s) => s.questionCount,
+      ),
+    ).toEqual([1, 3, 4]);
   });
 });

@@ -114,10 +114,3 @@
   background: transparent;
   cursor: pointer;
 }
-
-.results__saved {
-  margin: 0;
-  text-align: center;
-  font-weight: 700;
-  color: var(--color-success);
-}

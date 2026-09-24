@@ -91,7 +91,8 @@ export const App = () => {
 
   const handleSessionComplete = (result: SessionResult) => {
     if (result.answerMode === 'paper') {
-      // Paper sessions are recorded later, once the child has self-marked.
+      // Never recorded (#44): the child marks the sheet against the answers on
+      // screen, so the marks are a claim the statistics cannot check.
     } else if (result.answerMode === 'training') {
       recordTrainingSession(activeId, result);
     } else {
@@ -107,11 +108,6 @@ export const App = () => {
     importProfile(targetId, backup);
     // Importing into some *other* profile must not disturb the one in use.
     if (targetId === activeId) setSettings(backup.data.settings);
-  };
-
-  const handleSaveResult = (final: SessionResult) => {
-    recordSession(activeId, final);
-    setLastResult(final);
   };
 
   const activeName = findProfile(registry, activeId)?.name ?? '';
@@ -166,7 +162,6 @@ export const App = () => {
             result={lastResult}
             onReplay={() => setScreen('session')}
             onHome={() => setScreen('home')}
-            onSave={handleSaveResult}
           />
         )}
         {screen === 'settings' && (

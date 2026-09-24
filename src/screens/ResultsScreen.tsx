@@ -9,8 +9,6 @@ type Props = {
   result: SessionResult;
   onReplay: () => void;
   onHome: () => void;
-  /** Paper mode only: persist the self-marked result to history. */
-  onSave?: (final: SessionResult) => void;
 };
 
 type Kind = 'ok' | 'slow' | 'wrong' | 'timeout';
@@ -92,6 +90,7 @@ const PaperResults = ({
       <p className="results__legend">
         {t('results.paperLegend')}
       </p>
+      <p className="results__legend">{t('results.paperNotSaved')}</p>
       <ul className="results__list">
         {result.answers.map((record, i) => (
           <li
@@ -139,12 +138,13 @@ const TrainingResults = ({ result }: { result: SessionResult }) => {
   );
 };
 
-export const ResultsScreen = ({ result, onReplay, onHome, onSave }: Props) => {
+export const ResultsScreen = ({ result, onReplay, onHome }: Props) => {
   const { t } = useI18n();
   const isPaper = result.answerMode === 'paper';
   const isTraining = result.answerMode === 'training';
+  // Paper marks only drive the live score: nothing is saved (#44), so the
+  // all-correct default can no longer inflate the statistics.
   const [marks, setMarks] = useState<boolean[]>(() => result.answers.map(() => true));
-  const [saved, setSaved] = useState(false);
 
   const scoredAnswers: AnswerRecord[] = isPaper
     ? result.answers.map((a, i) => ({ ...a, selfMarkedCorrect: marks[i] }))
@@ -154,12 +154,6 @@ export const ResultsScreen = ({ result, onReplay, onHome, onSave }: Props) => {
     durationPerQuestionMs: result.durationPerQuestionMs,
     partialCreditFactor: result.partialCreditFactor,
   });
-
-  const handleSave = () => {
-    if (saved) return;
-    setSaved(true);
-    onSave?.({ ...result, answers: scoredAnswers });
-  };
 
   return (
     <div className="results">
@@ -185,12 +179,6 @@ export const ResultsScreen = ({ result, onReplay, onHome, onSave }: Props) => {
       )}
 
       <div className="results__actions">
-        {isPaper && !saved && (
-          <button type="button" className="results__btn" onClick={handleSave}>
-            {`💾 ${t('results.save')}`}
-          </button>
-        )}
-        {isPaper && saved && <p className="results__saved">{`${t('results.saved')} ✓`}</p>}
         <button type="button" className="results__btn" onClick={onReplay}>
           {`🔁 ${t('results.replay')}`}
         </button>

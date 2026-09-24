@@ -1,7 +1,7 @@
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import { act, render, screen, fireEvent } from '@testing-library/react';
 import { App } from '../App';
-import { storageKeys, loadHistory } from '../storage/profileStore';
+import { storageKeys, loadHistory, loadTrainingHistory } from '../storage/profileStore';
 
 beforeEach(() => {
   vi.useFakeTimers({
@@ -32,7 +32,7 @@ const advance = (ms: number) =>
   });
 
 describe('App — pen-and-paper flow', () => {
-  test('nothing is recorded until Enregistrer is pressed', () => {
+  test('a paper test is never recorded, whatever the child marks (#44)', () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole('button', { name: /Lancer/ }));
@@ -41,13 +41,12 @@ describe('App — pen-and-paper flow', () => {
     advance(4000); // question 2 → results
 
     expect(screen.getByText('Bilan')).toBeInTheDocument();
+    // The marks still drive the live score for the child's own review.
+    fireEvent.click(screen.getAllByRole('button', { pressed: true })[0]);
+    expect(screen.getByText('1 / 2')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /accueil/i }));
     expect(loadHistory('default')).toHaveLength(0);
-
-    fireEvent.click(screen.getByRole('button', { name: /Enregistrer/ }));
-
-    const history = loadHistory('default');
-    expect(history).toHaveLength(1);
-    expect(history[0].answerMode).toBe('paper');
-    expect(history[0].answers).toHaveLength(2);
+    expect(loadTrainingHistory('default')).toHaveLength(0);
   });
 });

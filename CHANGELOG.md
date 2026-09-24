@@ -8,6 +8,21 @@ and the project uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- **Paper tests are no longer recorded** (#44). The paper results screen
+  started with every row marked ✅ and 💾 enabled, so tapping Save without
+  comparing recorded a perfect session; and even an honest mark was made
+  against the answers shown on the same screen, so the app had no way to check
+  it. Those sessions also cost real data: decay counts sessions, so each one
+  aged the on-screen results by a step and took one of the 50 history slots.
+  The 💾 button, `ResultsScreen`'s `onSave` and `App`'s save handler are gone;
+  the ✅/❌ toggles and the live score stay for the child's own review, with a
+  `results.paperNotSaved` line saying the test is not saved (replaces
+  `results.save` / `results.saved`). A new `trackedSessions` in `stats.ts`
+  drops `answerMode: 'paper'` sessions at read time, in `loadPairStats` and on
+  the progress screen, so paper sessions saved by older versions stop counting
+  without being deleted from storage or exports. The backup format is
+  unchanged (`formatVersion` 1); the schema and `docs/data-format.md` now say
+  paper records are legacy. List mode already worked this way.
 - **Slow correct answers now count as a weakness** (#47). `aggregatePairs`
   only counted wrong answers, timeouts and paper ❌ marks as failures, so a
   pair answered right in 9 s every time showed as mastered (`heat--0`), stayed

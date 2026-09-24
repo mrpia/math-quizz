@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { loadHistory, loadTrainingHistory } from '../storage/profileStore';
+import { trackedSessions } from '../domain/stats';
 import { sessionScores, trickiestPairs, errorGrid } from '../domain/progress';
 import { ScoreLineChart } from '../components/ScoreLineChart';
 import { TrickiestPairsList } from '../components/TrickiestPairsList';
@@ -29,7 +30,10 @@ export const ProgressScreen = ({
   const [view, setView] = useState<View>('test');
   // Keyed by profile so switching re-reads instead of showing the last child's
   // curve under the new name.
-  const testHistory = useMemo(() => loadHistory(profileId), [profileId]);
+  const testHistory = useMemo(
+    () => trackedSessions(loadHistory(profileId)),
+    [profileId],
+  );
   const trainingHistory = useMemo(
     () => loadTrainingHistory(profileId),
     [profileId],

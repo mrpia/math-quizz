@@ -132,6 +132,14 @@ Collapsing them would either flag pairs the child has already fixed or judge a
 pair on one recent lucky answer. Decay is per *session*, never wall-clock: it
 stays deterministic and does not blank the progress screen after a holiday.
 
+**Paper tests are never recorded** (#44), the same way list mode never is. The
+child marks the sheet against the answers shown on screen, so the app cannot
+check a ✅, and because decay counts sessions, even an honest paper session would
+age the real ones. Don't bring back a Save button or a "reviewed" flag. Older
+versions did save paper sessions; `trackedSessions` (`stats.ts`) drops them at
+read time in `loadPairStats` and on the progress screen, and leaves storage and
+exports alone. A new reader of `history` should go through it too.
+
 `HISTORY_LIMIT` is not arbitrary any more — it is sized to the half-life, and
 `stats.test.ts` asserts `HISTORY_LIMIT >= 5 * RECENCY_HALF_LIFE_SESSIONS`. Raise
 one and you must raise the other.
