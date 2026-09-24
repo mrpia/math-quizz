@@ -10,6 +10,8 @@ import { MULTIPLIERS } from '../domain/tables';
 import type { Settings } from '../domain/session';
 import type { PairCounterMap, PairCounters } from '../domain/stats';
 
+const key = (a: number, b: number) => (a < b ? `${a}x${b}` : `${b}x${a}`);
+
 const baseSettings = (overrides: Partial<Settings> = {}): Settings => ({
   durationPerQuestionMs: 4000,
   questionCount: 22,
@@ -68,17 +70,50 @@ describe('generateQuestions', () => {
   });
 
   test.each(['mul', 'div', 'mix'] as const)(
-    'mode "%s": asking for the whole pool over several tables yields every pair exactly once',
+    'mode "%s": asking for the whole pool over several tables yields every fact exactly once',
     (mode) => {
+      // 2, 7 and 12 are both tables and multipliers, so 2×7, 2×12 and 7×12
+      // are one fact each, not two: 44 ordered entries, 41 facts.
       const selectedTables = [2, 7, 12, 25];
-      const questions = generateQuestions(
-        baseSettings({ selectedTables, mode, questionCount: selectedTables.length * MULTIPLIERS.length }),
+      const facts = new Set(
+        selectedTables.flatMap((a) => MULTIPLIERS.map((b) => key(a, b))),
       );
-      const drawn = questions.map((q) => `${q.a}×${q.b}`).sort();
-      const pool = selectedTables.flatMap((a) => MULTIPLIERS.map((b) => `${a}×${b}`)).sort();
-      expect(drawn).toEqual(pool);
+      expect(facts.size).toBe(41);
+      const questions = generateQuestions(
+        baseSettings({ selectedTables, mode, questionCount: facts.size }),
+      );
+      const drawn = questions.map((q) => key(q.a, q.b)).sort();
+      expect(drawn).toEqual([...facts].sort());
     },
   );
+
+  test('a fact whose mirror is also selected comes up in both orientations', () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 200; i++) {
+      for (const q of generateQuestions(
+        baseSettings({ selectedTables: [3, 4], questionCount: 21 }),
+      )) {
+        seen.add(`${q.a}×${q.b}`);
+      }
+    }
+    expect(seen).toContain('3×4');
+    expect(seen).toContain('4×3');
+  });
+
+  test('a commutative fact is drawn as often as a square', () => {
+    // Tables 3 and 4: 21 facts. Before #41, 3×4 sat in the pool twice
+    // (2/22) against 3×3 once (1/22).
+    const settings = baseSettings({ selectedTables: [3, 4], questionCount: 1 });
+    let commutative = 0;
+    let square = 0;
+    for (let i = 0; i < 6000; i++) {
+      const [q] = generateQuestions(settings);
+      if (key(q.a, q.b) === '3x4') commutative++;
+      if (key(q.a, q.b) === '3x3') square++;
+    }
+    // Both expected about 286; the old pool gives about 545 against 273.
+    expect(commutative / square).toBeLessThan(1.4);
+  });
 
   test('pool smaller than questionCount: returns questionCount questions with repetitions', () => {
     // 1 selected table * 11 multipliers = 11 distinct couples
@@ -112,8 +147,6 @@ const counters = (overrides: Partial<PairCounters> = {}): PairCounters => ({
   weightedFailures: 0,
   ...overrides,
 });
-
-const key = (a: number, b: number) => (a < b ? `${a}x${b}` : `${b}x${a}`);
 
 /** Every a×b pair of one table practised and mastered. */
 const mastered = (a: number): PairCounterMap => {

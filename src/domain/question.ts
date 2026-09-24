@@ -97,10 +97,41 @@ const pickOp = (mode: Mode): Operator =>
   mode === 'mix' ? (Math.random() < 0.5 ? 'mul' : 'div') : mode;
 
 /**
+ * One fact in the draw pool: `a` a selected table, `b` a multiplier.
+ * `reversible` when `b × a` is also in the selection, i.e. both are selected
+ * tables in 2..12. The child knows a pair, not a direction (see `stats.ts`),
+ * so 3×4 and 4×3 are one fact, drawn as often as 3×3 or 15×4, and the
+ * orientation is picked when the question is asked.
+ */
+type Fact = { a: number; b: number; reversible: boolean };
+
+const isMultiplier = (n: number): boolean =>
+  (MULTIPLIERS as readonly number[]).includes(n);
+
+const buildPool = (tables: number[]): Fact[] => {
+  const selected = new Set(tables);
+  const pool: Fact[] = [];
+  for (const a of selected) {
+    for (const b of MULTIPLIERS) {
+      const reversible = a !== b && selected.has(b) && isMultiplier(a);
+      // Keep one of the two orientations: the one with the smaller table.
+      if (reversible && b < a) continue;
+      pool.push({ a, b, reversible });
+    }
+  }
+  return pool;
+};
+
+const drawQuestion = (fact: Fact, mode: Mode): Question =>
+  fact.reversible && Math.random() < 0.5
+    ? buildQuestion(fact.b, fact.a, pickOp(mode))
+    : buildQuestion(fact.a, fact.b, pickOp(mode));
+
+/**
  * Draws a session. `stats` — normally `aggregatePairs` over the profile's
  * histories — biases the draw toward pairs the child has been getting wrong
  * lately, as strongly as `settings.adaptiveDraw` asks. Without it, or with
- * 'off', every pair is equally likely.
+ * 'off', every fact is equally likely: 3×4 and 4×3 count as one.
  */
 export const generateQuestions = (
   settings: Settings,
@@ -113,26 +144,20 @@ export const generateQuestions = (
     throw new Error('questionCount must be positive');
   }
 
-  const pool: Question[] = [];
-  for (const a of settings.selectedTables) {
-    for (const b of MULTIPLIERS) {
-      pool.push(buildQuestion(a, b, pickOp(settings.mode)));
-    }
-  }
-
+  const pool = buildPool(settings.selectedTables);
   const alpha = adaptiveAlpha(settings);
-  const weights = pool.map((q) => pairWeight(q.a, q.b, stats, alpha));
+  const weights = pool.map((f) => pairWeight(f.a, f.b, stats, alpha));
+  const ask = (f: Fact) => drawQuestion(f, settings.mode);
 
   if (pool.length >= settings.questionCount) {
-    return fisherYates(weightedSample(pool, weights, settings.questionCount));
+    return fisherYates(weightedSample(pool, weights, settings.questionCount).map(ask));
   }
 
-  // Every pair once, then weighted repeats to make up the count.
+  // Every fact once, then weighted repeats to make up the count.
   const total = weights.reduce((sum, w) => sum + w, 0);
-  const extras: Question[] = [];
+  const extras: Fact[] = [];
   while (pool.length + extras.length < settings.questionCount) {
-    const src = weightedPick(pool, weights, total);
-    extras.push(buildQuestion(src.a, src.b, pickOp(settings.mode)));
+    extras.push(weightedPick(pool, weights, total));
   }
-  return fisherYates([...pool, ...extras]);
+  return fisherYates([...pool, ...extras].map(ask));
 };

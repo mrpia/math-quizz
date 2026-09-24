@@ -7,6 +7,17 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- **3 × 4 and 4 × 3 are now one fact in the draw** (#41). The pool held one
+  entry per selected table × multiplier, so with tables 3 and 4 both selected,
+  3 × 4 and 4 × 3 each got an entry: every commutative fact was drawn twice as
+  often as a square or a fact on 15, 24 or 25, and the adaptive boost applied
+  twice. `generateQuestions` now builds the pool over canonical pairs, the
+  same key `stats.ts` files attempts under, and picks the orientation at draw
+  time when both factors are selected. Both orientations still come up; each
+  fact carries equal weight. With all 14 tables selected the pool shrinks from
+  154 entries to 99 facts, so a session only repeats a fact past 99 questions.
+
 ### Fixed
 - **Half-second targets were shown rounded up** (#38). The timer label and the
   results legend formatted the target with `toFixed(0)`, so a 2.5 s target read
