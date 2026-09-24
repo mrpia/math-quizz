@@ -21,6 +21,15 @@ and the project uses [Semantic Versioning](https://semver.org/).
   now go through `formatPoints` in `src/domain/format.ts`, which keeps two
   decimals like `formatSeconds`: the Settings input's 0.1 step is only a hint,
   and neither Settings nor the backup import rounds the factor.
+- **The timer could read "4.0s" on an answer scored slow** (#48). It rounded
+  to the nearest tenth, so 4.04 s showed as "4.0s" against a 4 s target, and it
+  ran its own clock, started one commit after the scoring clock. `Timer` now
+  takes the scoring start as a `startedAt` prop (replacing `resetKey`), and the
+  display goes through `formatElapsed`, which rounds up: the shown number passes
+  the target exactly when scoring turns slow. Targets off the tenth grid (a
+  typed 2.25 s) are shown in hundredths so the boundary still holds. What is
+  left is under one animation frame: the screen shows the last frame, and the
+  answer is timed at the tap.
 - **Reporting inconsistencies** (#42). None of these changed a score or a
   statistic:
   - The heat-map tooltip showed the recency-weighted rate ("7×8 — 32%") while
