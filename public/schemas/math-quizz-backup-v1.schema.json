@@ -144,7 +144,7 @@
           "enum": ["mul", "div", "mix"]
         },
         "answerMode": {
-          "description": "How the answers were collected. Screen sessions recorded by versions up to 1.1.0 omit it, as does anything older than the field — read an absent value as 'screen'. Never 'list', which records no session.",
+          "description": "How the answers were collected. Screen sessions recorded by versions up to 1.1.0 omit it, as does anything older than the field — read an absent value as 'screen'. Never 'list', which records no session. 'paper' only appears in histories written by versions up to 1.1.0: later versions never save a paper test, and the app leaves such sessions out of every statistic, because the child marked them against the answers shown on screen.",
           "enum": ["screen", "paper", "training"]
         },
         "answers": {
@@ -168,7 +168,7 @@
           "type": "number"
         },
         "selfMarkedCorrect": {
-          "description": "Whether the answer counts as right, when present. It overrides the given/expected comparison for scoring and statistics. Paper records: the child's own mark on the results screen, with `given` null because the app never sees what was written. Training records: the app's own check, stored next to the numeric `given` it was computed from. Screen records omit it.",
+          "description": "Whether the answer counts as right, when present. It overrides the given/expected comparison for scoring and statistics. Paper records (written by versions up to 1.1.0 only): the child's own mark on the results screen, with `given` null because the app never sees what was written. Training records: the app's own check, stored next to the numeric `given` it was computed from. Screen records omit it.",
           "type": "boolean"
         }
       }

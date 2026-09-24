@@ -125,3 +125,13 @@ export const chronological = (...histories: SessionResult[][]): SessionResult[] 
   histories
     .flat()
     .sort((x, y) => (x.startedAt < y.startedAt ? -1 : x.startedAt > y.startedAt ? 1 : 0));
+
+/**
+ * The sessions statistics are built from. Paper tests are left out (#44): the
+ * app never sees the sheet, and the child marks it against an answer key shown
+ * on screen, so a paper ✅ is a claim, not a measurement. Current versions no
+ * longer save them; this drops the ones older versions did, without deleting
+ * anything from storage or from an export.
+ */
+export const trackedSessions = (history: SessionResult[]): SessionResult[] =>
+  history.filter((session) => session.answerMode !== 'paper');

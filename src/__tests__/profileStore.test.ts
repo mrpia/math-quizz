@@ -208,6 +208,21 @@ describe('loadPairStats', () => {
     expect(weightedFailures).toBeLessThan(weightedAttempts / 2);
   });
 
+  test('ignores paper sessions already in storage (#44)', () => {
+    // Self-marked against a visible answer key: saved by versions before #44.
+    const paper: SessionResult = {
+      ...mkSession(1),
+      answerMode: 'paper',
+      answers: [{ ...mkSession(1).answers[0], given: null, selfMarkedCorrect: true }],
+    };
+    recordSession('default', missed(0));
+    recordSession('default', paper);
+    const stats = loadPairStats('default')['7x8'];
+    expect(stats.attempts).toBe(1);
+    // Not aged by the paper session either: the miss is still the latest entry.
+    expect(stats.weightedFailures).toBe(stats.weightedAttempts);
+  });
+
   test('reads only the profile it is given', () => {
     recordSession('other', missed(0));
     expect(loadPairStats('default')).toEqual({});

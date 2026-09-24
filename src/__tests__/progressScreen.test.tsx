@@ -45,6 +45,21 @@ describe('ProgressScreen', () => {
     expect(screen.getByText('7 × 8')).toBeInTheDocument();
   });
 
+  test('paper sessions saved by older versions are left out (#44)', () => {
+    const paper = session({
+      answerMode: 'paper',
+      answers: [
+        { question: { a: 7, b: 8, op: 'mul', expected: 56 }, given: null, elapsedMs: 0, selfMarkedCorrect: false },
+        { question: { a: 7, b: 8, op: 'mul', expected: 56 }, given: null, elapsedMs: 0, selfMarkedCorrect: false },
+        { question: { a: 7, b: 8, op: 'mul', expected: 56 }, given: null, elapsedMs: 0, selfMarkedCorrect: false },
+      ],
+    });
+    localStorage.setItem(storageKeys('default').history, JSON.stringify([paper]));
+    render(<ProgressScreen {...profileProps} onBack={() => {}} />);
+    expect(screen.getByText(/Joue quelques sessions/i)).toBeInTheDocument();
+    expect(screen.queryByText('7 × 8')).not.toBeInTheDocument();
+  });
+
   test('heat-map tooltip shows the same raw count as the list, not the weighted %', () => {
     // Two sessions, so the weighted rate (older failures discounted) differs
     // from the raw 2 / 6 and a percentage would give the game away.

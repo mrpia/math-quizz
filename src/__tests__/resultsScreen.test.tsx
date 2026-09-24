@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ResultsScreen } from '../screens/ResultsScreen';
 import type { SessionResult } from '../domain/session';
@@ -43,32 +43,22 @@ const noop = () => {};
 
 describe('ResultsScreen — paper self-marking', () => {
   test('rows default to correct → score equals max', () => {
-    render(<ResultsScreen result={paperResult} onReplay={noop} onHome={noop} onSave={noop} />);
+    render(<ResultsScreen result={paperResult} onReplay={noop} onHome={noop} />);
     expect(screen.getByText('2 / 2')).toBeInTheDocument();
     // The correct answer is shown for self-comparison
     expect(screen.getByText('7 × 8 = 56')).toBeInTheDocument();
   });
 
   test('un-marking a row lowers the live score', () => {
-    render(<ResultsScreen result={paperResult} onReplay={noop} onHome={noop} onSave={noop} />);
+    render(<ResultsScreen result={paperResult} onReplay={noop} onHome={noop} />);
     fireEvent.click(screen.getByRole('button', { name: /7 × 8 = 56/ }));
     expect(screen.getByText('1 / 2')).toBeInTheDocument();
   });
 
-  test('Enregistrer fires onSave once with selfMarkedCorrect from the marks, then disappears', () => {
-    const onSave = vi.fn();
-    render(<ResultsScreen result={paperResult} onReplay={noop} onHome={noop} onSave={onSave} />);
-
-    fireEvent.click(screen.getByRole('button', { name: /6 × 9 = 54/ })); // mark second wrong
-    fireEvent.click(screen.getByRole('button', { name: /Enregistrer/ }));
-
-    expect(onSave).toHaveBeenCalledTimes(1);
-    const saved = onSave.mock.calls[0][0] as SessionResult;
-    expect(saved.answers[0].selfMarkedCorrect).toBe(true);
-    expect(saved.answers[1].selfMarkedCorrect).toBe(false);
-    expect(saved.answerMode).toBe('paper');
-
+  test('has no Enregistrer button: a paper test is never saved (#44)', () => {
+    render(<ResultsScreen result={paperResult} onReplay={noop} onHome={noop} />);
     expect(screen.queryByRole('button', { name: /Enregistrer/ })).toBeNull();
+    expect(screen.getByText(/pas enregistré/)).toBeInTheDocument();
   });
 });
 

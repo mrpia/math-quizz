@@ -53,7 +53,7 @@ a file may omit everything else, and the importer fills in a default. Inside
 | `data.*` | localStorage key | Contents |
 |---|---|---|
 | `settings` | `…:settings` | Timer target, question count, selected tables, mode, answer mode, language, adaptive-draw strength |
-| `history` | `…:history` | Completed timed tests, oldest first, capped at 50 |
+| `history` | `…:history` | Completed on-screen tests, oldest first, capped at 50 |
 | `trainingHistory` | `…:training-history` | Completed training sessions, same shape, same cap |
 | `errors` | — | **Deprecated.** Lifetime per-pair counters written by versions up to 0.10.0. Accepted on import, never exported |
 
@@ -109,12 +109,19 @@ operands sorted ascending, so 7×8, 8×7 and 56÷7 all accumulate under `"7x8"`.
 `given`/`expected` comparison for both scoring and statistics. Two modes write
 it:
 
-- **paper**: the app never sees the written answer, so `given` is `null` and
-  the flag is what the child ticked on the results screen;
+- **paper** (versions up to 1.1.0 only): the app never sees the written answer,
+  so `given` is `null` and the flag is what the child ticked on the results
+  screen;
 - **training**: `given` is the number typed, and the flag is the app's own check,
   stored at answer time.
 
 Screen records leave it out and are judged on `given === expected`.
+
+**Paper tests are no longer recorded.** The child marked them against the
+answers shown on screen, so a paper ✅ could not be checked (#44). Later
+versions never save one, and the app leaves any `answerMode: "paper"` session
+still in `history` out of the score chart, the pair statistics and the
+question draw. Such sessions stay valid in an export and import unchanged.
 
 **A `null` `given` outside paper mode is legacy data.** Older versions cut a
 screen question off when time ran out and stored `given: null`. No current mode
@@ -159,7 +166,8 @@ tooling works. A few examples:
 
 ```bash
 # Score of every recorded test, as a ratio.
-# selfMarkedCorrect wins when present (paper and training records carry it).
+# selfMarkedCorrect wins when present (training and legacy paper records carry it).
+# Add `select(.answerMode != "paper")` to match what the app itself counts.
 jq '.data.history[] | {
       at: .startedAt,
       correct: ([.answers[] | select(
