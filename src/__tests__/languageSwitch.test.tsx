@@ -38,8 +38,9 @@ describe('HomeScreen language', () => {
 describe('ErrorHeatmap language', () => {
   it('renders the legend in German', () => {
     renderWithLanguage(<ErrorHeatmap grid={[]} />, 'de');
-    expect(screen.getByText('selten')).toBeInTheDocument();
-    expect(screen.getByText('häufig')).toBeInTheDocument();
+    expect(screen.getByText('kannst du')).toBeInTheDocument();
+    expect(screen.getByText('üben')).toBeInTheDocument();
+    expect(screen.getByText('noch unsicher')).toBeInTheDocument();
     expect(screen.getByText('nicht gespielt')).toBeInTheDocument();
   });
 });

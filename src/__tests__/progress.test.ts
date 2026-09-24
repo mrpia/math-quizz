@@ -4,10 +4,12 @@ import {
   sessionScores,
   trickiestPairs,
   errorGrid,
+  completeTables,
   REVIEW_MIN_RATE,
+  CONFIDENT_MIN_ATTEMPTS,
 } from '../domain/progress';
 import { aggregatePairs, canonicalKey, weightedErrorRate } from '../domain/stats';
-import { rateBucket } from '../components/rateColor';
+import { rateBucket, cellBucket } from '../components/rateColor';
 import { MULTIPLICANDS, MULTIPLIERS } from '../domain/tables';
 import type { SessionResult, AnswerRecord } from '../domain/session';
 import type { Question } from '../domain/question';
@@ -330,5 +332,88 @@ describe('errorGrid', () => {
     expect(grid[r15][c11].attempts).toBe(0);
     expect(grid[r15][c11].failures).toBe(0);
     expect(grid[r15][c11].slow).toBe(0);
+  });
+});
+
+describe('errorGrid — confidence', () => {
+  const cellOf = (grid: ReturnType<typeof errorGrid>, a: number, b: number) =>
+    grid[MULTIPLICANDS.indexOf(a as never)][MULTIPLIERS.indexOf(b as never)];
+
+  test('shares its attempt threshold with the review list', () => {
+    const answers = Array.from({ length: CONFIDENT_MIN_ATTEMPTS }, () => rec(mkQ(7, 8), 50, 1000));
+    const history = [mkSession(answers)];
+    expect(trickiestPairs(history).map((p) => `${p.a}x${p.b}`)).toEqual(['7x8']);
+    expect(cellOf(errorGrid(history), 7, 8).confident).toBe(true);
+
+    const fewer = [mkSession(answers.slice(1))];
+    expect(trickiestPairs(fewer)).toEqual([]);
+    expect(cellOf(errorGrid(fewer), 7, 8).confident).toBe(false);
+  });
+
+  test('one lucky answer is not confident, and is not painted green', () => {
+    const cell = cellOf(errorGrid([mkSession([rec(mkQ(7, 8), 56, 1000)])]), 7, 8);
+    expect(cell).toMatchObject({ attempts: 1, errorRate: 0, confident: false });
+    expect(cellBucket(cell)).toBe('unsure');
+  });
+
+  test('an unconfident miss is unsure too, as it is absent from the review list', () => {
+    const cell = cellOf(errorGrid([mkSession([rec(mkQ(7, 8), 50, 1000)])]), 7, 8);
+    expect(cellBucket(cell)).toBe('unsure');
+  });
+
+  test('a confident cell takes its rate colour, a never-played one stays nodata', () => {
+    const grid = errorGrid([
+      mkSession([rec(mkQ(7, 8), 56, 1000), rec(mkQ(7, 8), 56, 1000), rec(mkQ(8, 7), 56, 1000)]),
+    ]);
+    expect(cellBucket(cellOf(grid, 7, 8))).toBe(rateBucket(0));
+    expect(cellBucket(cellOf(grid, 15, 11))).toBe('nodata');
+  });
+});
+
+describe('completeTables', () => {
+  /** Every pair of table `a`, answered correctly and fast `times` times. */
+  const tableAnswers = (a: number, times = CONFIDENT_MIN_ATTEMPTS): AnswerRecord[] =>
+    MULTIPLIERS.flatMap((b) =>
+      Array.from({ length: times }, () => rec(mkQ(a, b), a * b, 1000)),
+    );
+
+  test('lists a table whose every pair is confidently mastered', () => {
+    expect(completeTables(errorGrid([mkSession(tableAnswers(7))]))).toEqual([7]);
+  });
+
+  test('one pair short of the attempt threshold keeps the star away', () => {
+    const answers = tableAnswers(7).slice(1); // 7×2 answered one time fewer
+    expect(completeTables(errorGrid([mkSession(answers)]))).toEqual([]);
+  });
+
+  test('one pair still to review keeps the star away', () => {
+    const answers = [...tableAnswers(7), rec(mkQ(7, 8), 50, 1000)];
+    expect(completeTables(errorGrid([mkSession(answers)]))).toEqual([]);
+  });
+
+  test('slowness counts: an always-slow pair keeps the star away (#47)', () => {
+    const answers = tableAnswers(7).map((r) =>
+      r.question.b === 8 ? { ...r, elapsedMs: 9000 } : r,
+    );
+    expect(completeTables(errorGrid([mkSession(answers)]))).toEqual([]);
+  });
+
+  test('pairs shared with another table count for both', () => {
+    // Every 2..12 table crossed with 7 is covered once table 7 is: 7×8 is also 8×7.
+    const grid = errorGrid([mkSession(tableAnswers(7))]);
+    expect(cellBucket(grid[MULTIPLICANDS.indexOf(8)][MULTIPLIERS.indexOf(7)])).toBe('0');
+    expect(completeTables(grid)).not.toContain(8);
+  });
+
+  test('a new miss removes the star; time passing without one does not', () => {
+    const mastered = mkSession(tableAnswers(7));
+    const unrelated = Array.from({ length: 30 }, (_, i) =>
+      mkSession([rec(mkQ(3, 4), 12, 1000)], {
+        startedAt: `2026-02-${String(i + 1).padStart(2, '0')}T00:00:00.000Z`,
+      }),
+    );
+    expect(completeTables(errorGrid([mastered, ...unrelated]))).toEqual([7]);
+    const slip = mkSession([rec(mkQ(7, 8), 50, 1000)], { startedAt: '2026-03-01T00:00:00.000Z' });
+    expect(completeTables(errorGrid([mastered, ...unrelated, slip]))).toEqual([]);
   });
 });
