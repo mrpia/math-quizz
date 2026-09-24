@@ -1,6 +1,7 @@
 import type { PairStat } from '../domain/progress';
 import { rateBucket } from './rateColor';
 import { useI18n } from '../i18n/I18nContext';
+import { formatPairCount } from '../domain/format';
 
 type Props = { pairs: PairStat[] };
 
@@ -28,7 +29,7 @@ export const TrickiestPairsList = ({ pairs }: Props) => {
             />
           </span>
           <span className="pairs__num">
-            {p.errors + p.timeouts} / {p.attempts}
+            {formatPairCount(p.errors + p.timeouts, p.attempts, p.slow)}
           </span>
         </li>
       ))}

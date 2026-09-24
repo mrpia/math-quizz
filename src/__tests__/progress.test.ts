@@ -249,6 +249,40 @@ describe('trickiestPairs — review cut-off', () => {
   });
 });
 
+describe('trickiestPairs — slowness (#47)', () => {
+  test('a pair answered right but always slowly is listed, with its slow count', () => {
+    // 7x8: right every time, always past the 4 s target -> weighted rate 0.5.
+    const history = [
+      mkSession([
+        rec(mkQ(7, 8), 56, 9000),
+        rec(mkQ(7, 8), 56, 9000),
+        rec(mkQ(8, 7), 56, 9000),
+        rec(mkQ(5, 5), 25, 1000),
+        rec(mkQ(5, 5), 25, 1000),
+        rec(mkQ(5, 5), 25, 1000),
+      ]),
+    ];
+    const top = trickiestPairs(history);
+    expect(top).toHaveLength(1);
+    expect(top[0]).toMatchObject({ a: 7, b: 8, attempts: 3, errors: 0, timeouts: 0, slow: 3 });
+    expect(top[0].errorRate).toBeCloseTo(0.5);
+  });
+
+  test('a miss still ranks above the same number of slow answers', () => {
+    const history = [
+      mkSession([
+        rec(mkQ(7, 8), 56, 9000),
+        rec(mkQ(7, 8), 56, 1000),
+        rec(mkQ(7, 8), 56, 1000),
+        rec(mkQ(6, 9), 50, 1000),
+        rec(mkQ(6, 9), 54, 1000),
+        rec(mkQ(6, 9), 54, 1000),
+      ]),
+    ];
+    expect(trickiestPairs(history).map((p) => `${p.a}x${p.b}`)).toEqual(['6x9', '7x8']);
+  });
+});
+
 describe('errorGrid', () => {
   const history = [
     mkSession([
@@ -281,6 +315,13 @@ describe('errorGrid', () => {
     expect(cell.failures).toBe(2);
   });
 
+  test('carries the raw slow count, and slowness colours the cell', () => {
+    const grid = errorGrid([mkSession([rec(mkQ(7, 8), 56, 9000), rec(mkQ(7, 8), 56, 1000)])]);
+    const cell = grid[MULTIPLICANDS.indexOf(7)][MULTIPLIERS.indexOf(8)];
+    expect(cell).toMatchObject({ attempts: 2, failures: 0, slow: 1 });
+    expect(cell.errorRate).toBeCloseTo(0.25);
+  });
+
   test('never-practised cell has null errorRate', () => {
     const grid = errorGrid(history);
     const r15 = MULTIPLICANDS.indexOf(15);
@@ -288,5 +329,6 @@ describe('errorGrid', () => {
     expect(grid[r15][c11].errorRate).toBeNull();
     expect(grid[r15][c11].attempts).toBe(0);
     expect(grid[r15][c11].failures).toBe(0);
+    expect(grid[r15][c11].slow).toBe(0);
   });
 });

@@ -167,6 +167,7 @@ describe('aggregatePairs — recency weighting', () => {
         attempts: 0,
         errors: 0,
         timeouts: 0,
+        slow: 0,
         weightedAttempts: 0,
         weightedFailures: 0,
       }),
@@ -182,6 +183,100 @@ describe('aggregatePairs — recency weighting', () => {
     ]);
     expect(stats['3x4'].weightedFailures).toBeCloseTo(1);
     expect(weightedErrorRate(stats['3x4'])).toBeCloseTo(0.5);
+  });
+});
+
+describe('aggregatePairs — slowness (#47)', () => {
+  test('a correct answer past the target counts as slow and as a partial failure', () => {
+    const stats = aggregatePairs([
+      mkSession([
+        { question: mkQ(7, 8), given: 56, elapsedMs: 9000 }, // slow
+        { question: mkQ(7, 8), given: 56, elapsedMs: 1000 }, // fast
+      ]),
+    ]);
+    expect(stats['7x8']).toMatchObject({ attempts: 2, errors: 0, timeouts: 0, slow: 1 });
+    // Default factor 0.5: a slow answer is half a miss.
+    expect(stats['7x8'].weightedFailures).toBeCloseTo(0.5);
+    expect(weightedErrorRate(stats['7x8'])).toBeCloseTo(0.25);
+  });
+
+  test('two slow answers weigh like one miss', () => {
+    const slow = aggregatePairs([
+      mkSession([
+        { question: mkQ(7, 8), given: 56, elapsedMs: 9000 },
+        { question: mkQ(7, 8), given: 56, elapsedMs: 9000 },
+      ]),
+    ]);
+    const missed = aggregatePairs([
+      mkSession([
+        { question: mkQ(7, 8), given: 50, elapsedMs: 1000 },
+        { question: mkQ(7, 8), given: 56, elapsedMs: 1000 },
+      ]),
+    ]);
+    expect(slow['7x8'].weightedFailures).toBeCloseTo(missed['7x8'].weightedFailures);
+  });
+
+  test('an answer exactly on the target is not slow, as in scoring', () => {
+    const stats = aggregatePairs([
+      mkSession([{ question: mkQ(7, 8), given: 56, elapsedMs: 4000 }]),
+    ]);
+    expect(stats['7x8'].slow).toBe(0);
+    expect(stats['7x8'].weightedFailures).toBe(0);
+  });
+
+  test("each session is judged by its own target and partial-credit factor", () => {
+    const stats = aggregatePairs([
+      {
+        ...mkSession([{ question: mkQ(7, 8), given: 56, elapsedMs: 9000 }]),
+        durationPerQuestionMs: 10000, // 9 s was on time back then
+      },
+      {
+        ...mkSession([{ question: mkQ(3, 4), given: 12, elapsedMs: 5000 }]),
+        partialCreditFactor: 0.2, // slow earned 0.2, so it is 0.8 of a miss
+      },
+    ]);
+    expect(stats['7x8'].slow).toBe(0);
+    expect(stats['7x8'].weightedFailures).toBe(0);
+    expect(stats['3x4'].slow).toBe(1);
+    expect(stats['3x4'].weightedFailures).toBeCloseTo(0.8);
+  });
+
+  test('with full credit for slow answers, slowness is shown but not penalised', () => {
+    const stats = aggregatePairs([
+      {
+        ...mkSession([{ question: mkQ(7, 8), given: 56, elapsedMs: 9000 }]),
+        partialCreditFactor: 1,
+      },
+    ]);
+    expect(stats['7x8'].slow).toBe(1);
+    expect(stats['7x8'].weightedFailures).toBe(0);
+  });
+
+  test('a slow partial failure decays with recency like a miss', () => {
+    const slow = mkSession([{ question: mkQ(7, 8), given: 56, elapsedMs: 9000 }]);
+    const stats = aggregatePairs([slow, ...empties(RECENCY_HALF_LIFE_SESSIONS)]);
+    expect(stats['7x8'].weightedFailures).toBeCloseTo(0.25);
+    expect(stats['7x8'].weightedAttempts).toBeCloseTo(0.5);
+  });
+
+  test('a wrong answer is an error, never also slow', () => {
+    const stats = aggregatePairs([
+      mkSession([{ question: mkQ(7, 8), given: 50, elapsedMs: 9000 }]),
+    ]);
+    expect(stats['7x8']).toMatchObject({ errors: 1, slow: 0 });
+    expect(stats['7x8'].weightedFailures).toBeCloseTo(1);
+  });
+
+  test('self-marked records (paper, training) are never slow', () => {
+    // Training measures a real elapsed time, but its verdict is right or wrong.
+    const stats = aggregatePairs([
+      mkSession([
+        { question: mkQ(7, 8), given: 56, elapsedMs: 9000, selfMarkedCorrect: true },
+        { question: mkQ(7, 8), given: null, elapsedMs: 0, selfMarkedCorrect: true },
+      ]),
+    ]);
+    expect(stats['7x8'].slow).toBe(0);
+    expect(stats['7x8'].weightedFailures).toBe(0);
   });
 });
 

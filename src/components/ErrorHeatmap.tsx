@@ -2,6 +2,7 @@ import { MULTIPLIERS } from '../domain/tables';
 import type { GridCell } from '../domain/progress';
 import { rateBucket } from './rateColor';
 import { useI18n } from '../i18n/I18nContext';
+import { formatPairCount } from '../domain/format';
 
 type Props = { grid: GridCell[][] };
 
@@ -32,7 +33,7 @@ export const ErrorHeatmap = ({ grid }: Props) => {
                 const label =
                   cell.errorRate === null
                     ? `${cell.a}×${cell.b} — ${t('heatmap.notPlayed')}`
-                    : `${cell.a}×${cell.b} — ${cell.failures} / ${cell.attempts}`;
+                    : `${cell.a}×${cell.b} — ${formatPairCount(cell.failures, cell.attempts, cell.slow)}`;
                 return (
                   <td
                     key={`${cell.a}x${cell.b}`}

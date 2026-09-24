@@ -33,3 +33,11 @@ export const formatElapsed = (ms: number, targetMs: number): string => {
   const shownMs = Math.ceil(ms / stepMs) * stepMs;
   return (shownMs / 1000).toFixed(stepMs === 100 ? 1 : 2);
 };
+
+/**
+ * A pair's raw record as the list and the heat-map tooltip show it: "2 / 5",
+ * or "0 / 5 · 3 🐢" when some correct answers were slow. Without the slow
+ * count, a pair listed for review on slowness alone would read "0 / 5" (#47).
+ */
+export const formatPairCount = (failures: number, attempts: number, slow: number): string =>
+  slow > 0 ? `${failures} / ${attempts} · ${slow} 🐢` : `${failures} / ${attempts}`;

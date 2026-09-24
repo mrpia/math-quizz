@@ -5,7 +5,7 @@
  * one counter — the child knows a *pair*, not a direction.
  *
  * Each counter carries two views of the same data:
- * - **raw** (`attempts` / `errors` / `timeouts`) — honest lifetime-of-history
+ * - **raw** (`attempts` / `errors` / `timeouts` / `slow`) — honest lifetime-of-history
  *   counts. Used for confidence ("have we seen this pair enough to judge?")
  *   and for anything shown as a number.
  * - **weighted** (`weightedAttempts` / `weightedFailures`) — the same events
@@ -13,11 +13,18 @@
  *   child has since mastered stops being flagged instead of carrying its old
  *   failures forever.
  *
+ * A failure is the credit the answer did not earn, `1 - pointsFor(...)`, under
+ * the session's own target and partial-credit factor: a miss or a timeout is a
+ * whole failure, a correct answer past the target is `1 - partialCreditFactor`
+ * of one (#47). So the statistics apply the rule the score applies — a pair the
+ * results screen flags 🟡 does not show as mastered here.
+ *
  * Decay is measured in *sessions*, not wall-clock time: it stays deterministic,
  * is testable without mocking a clock, and never blanks the progress screen
  * after a school holiday the way elapsed-time decay would.
  */
 import type { SessionResult, AnswerRecord } from './session';
+import { pointsFor } from './scoring';
 
 /**
  * Sessions after which an attempt carries half the weight of one from the
@@ -37,6 +44,8 @@ export type PairCounters = {
   attempts: number;
   errors: number;
   timeouts: number;
+  /** Correct, but past the session's target — what the results screen marks 🟡. */
+  slow: number;
   weightedAttempts: number;
   weightedFailures: number;
 };
@@ -49,9 +58,9 @@ export const canonicalKey = (a: number, b: number): string => {
   return `${lo}x${hi}`;
 };
 
-type Outcome = 'correct' | 'error' | 'timeout';
+type Outcome = 'correct' | 'slow' | 'error' | 'timeout';
 
-const classify = (record: AnswerRecord): Outcome => {
+const classify = (record: AnswerRecord, targetMs: number): Outcome => {
   // Paper mode never sees the written answer, so the child's own mark wins.
   if (record.selfMarkedCorrect !== undefined) {
     return record.selfMarkedCorrect ? 'correct' : 'error';
@@ -60,13 +69,14 @@ const classify = (record: AnswerRecord): Outcome => {
   // still carry `given: null` records and must keep counting them.
   if (record.given === null) return 'timeout';
   if (record.given !== record.question.expected) return 'error';
-  return 'correct';
+  return record.elapsedMs <= targetMs ? 'correct' : 'slow';
 };
 
 const EMPTY: PairCounters = {
   attempts: 0,
   errors: 0,
   timeouts: 0,
+  slow: 0,
   weightedAttempts: 0,
   weightedFailures: 0,
 };
@@ -82,14 +92,15 @@ export const aggregatePairs = (history: SessionResult[]): PairCounterMap => {
     for (const record of session.answers) {
       const key = canonicalKey(record.question.a, record.question.b);
       const prev = stats[key] ?? EMPTY;
-      const outcome = classify(record);
-      const failed = outcome !== 'correct';
+      const outcome = classify(record, session.durationPerQuestionMs);
+      const failure = 1 - pointsFor(record, session);
       stats[key] = {
         attempts: prev.attempts + 1,
         errors: prev.errors + (outcome === 'error' ? 1 : 0),
         timeouts: prev.timeouts + (outcome === 'timeout' ? 1 : 0),
+        slow: prev.slow + (outcome === 'slow' ? 1 : 0),
         weightedAttempts: prev.weightedAttempts + weight,
-        weightedFailures: prev.weightedFailures + (failed ? weight : 0),
+        weightedFailures: prev.weightedFailures + failure * weight,
       };
     }
   });
@@ -97,8 +108,8 @@ export const aggregatePairs = (history: SessionResult[]): PairCounterMap => {
 };
 
 /**
- * Share of recent attempts that went wrong, 0..1 — `null` when the pair has
- * never been practised.
+ * Share of recent credit the pair lost, 0..1 — misses count whole, slow answers
+ * in part. `null` when the pair has never been practised.
  */
 export const weightedErrorRate = (counters: PairCounters): number | null =>
   counters.weightedAttempts === 0
