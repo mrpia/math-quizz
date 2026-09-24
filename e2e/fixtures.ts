@@ -78,8 +78,9 @@ export const storedSettings = (page: Page, id: string): Promise<Settings> =>
  * answered incorrectly.
  *
  * `trickiestPairs` only surfaces a pair with at least three raw attempts and a
- * non-zero weighted failure rate, so a fixture meant to be *visible* on the
- * progress screen has to clear that bar — hence the default of four attempts.
+ * weighted failure rate of at least `REVIEW_MIN_RATE` (0.08), so a fixture
+ * meant to be *visible* on the progress screen has to clear that bar — hence
+ * the default of four attempts with one wrong, a rate of 0.25.
  */
 export const sessionOverPair = (
   a: number,

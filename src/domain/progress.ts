@@ -34,6 +34,15 @@ export type GridCell = {
 
 export type TrickiestOpts = { minAttempts?: number; limit?: number };
 
+/**
+ * Lowest weighted failure rate that still counts as "needs review". Recency
+ * weights decay but never reach zero, so without a floor one miss, however
+ * old, would keep a pair listed forever (#43). The heat-map uses the same
+ * number as the edge of its "rare" colour, so a pair on the list is never
+ * painted as fine.
+ */
+export const REVIEW_MIN_RATE = 0.08;
+
 export const isCorrect = (record: AnswerRecord): boolean => {
   if (record.selfMarkedCorrect !== undefined) return record.selfMarkedCorrect;
   return record.given !== null && record.given === record.question.expected;
@@ -59,8 +68,9 @@ export const sessionScores = (
 
 /**
  * The pairs worth practising next. Confidence comes from the raw attempt count
- * (has this pair come up enough to judge?), ranking from the recency-weighted
- * rate (is it still shaky, or was that months ago?).
+ * (has this pair come up enough to judge?), ranking and the `REVIEW_MIN_RATE`
+ * cut-off from the recency-weighted rate (is it still shaky, or was that
+ * months ago?).
  */
 export const trickiestPairs = (
   history: SessionResult[],
@@ -79,7 +89,7 @@ export const trickiestPairs = (
         errorRate: weightedErrorRate(counters) ?? 0,
       };
     })
-    .filter((row) => row.attempts >= minAttempts && row.errorRate > 0)
+    .filter((row) => row.attempts >= minAttempts && row.errorRate >= REVIEW_MIN_RATE)
     .sort(
       (x, y) =>
         y.errorRate - x.errorRate ||

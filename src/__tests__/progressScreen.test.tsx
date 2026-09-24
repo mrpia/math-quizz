@@ -63,6 +63,22 @@ describe('ProgressScreen', () => {
     expect(cell).toHaveAttribute('title', '7×8 — 2 / 6');
   });
 
+  test('a pair whose only miss is old is not listed for review, and stays heat--0', () => {
+    const hit = { question: { a: 7, b: 8, op: 'mul' as const, expected: 56 }, given: 56, elapsedMs: 1000 };
+    const miss = { ...hit, given: 50 };
+    const history = [
+      session({ answers: [miss] }),
+      ...Array.from({ length: 20 }, (_, i) =>
+        session({ startedAt: `2026-01-${String(i + 2).padStart(2, '0')}T00:00:00.000Z`, answers: [hit] }),
+      ),
+    ];
+    localStorage.setItem(storageKeys('default').history, JSON.stringify(history));
+    render(<ProgressScreen {...profileProps} onBack={() => {}} />);
+    expect(screen.queryByText('7 × 8')).not.toBeInTheDocument();
+    expect(screen.getByText(/Aucune paire à revoir/)).toBeInTheDocument();
+    expect(screen.getByLabelText('7×8 — 1 / 21')).toHaveClass('heat--0');
+  });
+
   test('back button calls onBack', () => {
     const onBack = vi.fn();
     render(<ProgressScreen {...profileProps} onBack={onBack} />);

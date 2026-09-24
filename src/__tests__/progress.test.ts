@@ -4,7 +4,10 @@ import {
   sessionScores,
   trickiestPairs,
   errorGrid,
+  REVIEW_MIN_RATE,
 } from '../domain/progress';
+import { aggregatePairs, canonicalKey, weightedErrorRate } from '../domain/stats';
+import { rateBucket } from '../components/rateColor';
 import { MULTIPLICANDS, MULTIPLIERS } from '../domain/tables';
 import type { SessionResult, AnswerRecord } from '../domain/session';
 import type { Question } from '../domain/question';
@@ -175,15 +178,74 @@ describe('trickiestPairs — recency', () => {
   });
 
   test('the displayed counts stay raw even though the ranking is weighted', () => {
-    const history = [wrong(3, 4), ...Array.from({ length: 30 }, idle), right(3, 4), right(3, 4)];
+    const history = [wrong(3, 4), ...Array.from({ length: 10 }, idle), right(3, 4), right(3, 4)];
     const [pair] = trickiestPairs(history, { minAttempts: 3 });
-    // 1 miss out of 3 raw, but the miss is 32 sessions old.
+    // 1 miss out of 3 raw, but the miss is 12 sessions old: discounted, yet
+    // still recent enough to clear the review cut-off.
     expect(pair).toMatchObject({ attempts: 3, errors: 1 });
     expect(pair.errorRate).toBeLessThan(1 / 3);
+    expect(pair.errorRate).toBeGreaterThanOrEqual(REVIEW_MIN_RATE);
   });
 
   test('an all-correct pair is still excluded, however recent', () => {
     expect(trickiestPairs([right(5, 5), right(5, 5), right(5, 5)])).toHaveLength(0);
+  });
+});
+
+describe('trickiestPairs — review cut-off', () => {
+  const wrong = (a: number, b: number) => mkSession([rec(mkQ(a, b), 0, 1000)]);
+  const right = (a: number, b: number) => mkSession([rec(mkQ(a, b), a * b, 1000)]);
+  const idle = () => mkSession([]);
+  const rateOf = (history: SessionResult[], a: number, b: number) =>
+    weightedErrorRate(aggregatePairs(history)[canonicalKey(a, b)]) ?? 0;
+
+  test('one old miss followed by twenty hits drops the pair from the list (#43)', () => {
+    const history = [
+      wrong(2, 5),
+      ...Array.from({ length: 19 }, idle),
+      ...Array.from({ length: 20 }, () => right(2, 5)),
+    ];
+    // The weighted rate never reaches zero, which is what kept the pair listed.
+    expect(rateOf(history, 2, 5)).toBeGreaterThan(0);
+    expect(rateOf(history, 2, 5)).toBeLessThan(REVIEW_MIN_RATE);
+    expect(trickiestPairs(history)).toEqual([]);
+  });
+
+  test('a pair that is still shaky stays listed next to one that has recovered', () => {
+    const history = [
+      wrong(2, 5),
+      ...Array.from({ length: 20 }, () => right(2, 5)),
+      mkSession([
+        rec(mkQ(7, 8), 50, 1000),
+        rec(mkQ(7, 8), 51, 1000),
+        rec(mkQ(7, 8), 52, 1000),
+        rec(mkQ(7, 8), 56, 1000),
+        rec(mkQ(7, 8), 56, 1000),
+        rec(mkQ(7, 8), 56, 1000),
+      ]),
+    ];
+    expect(trickiestPairs(history).map((p) => `${p.a}x${p.b}`)).toEqual(['7x8']);
+  });
+
+  test('the cut-off applies to the weighted rate, on both sides of it', () => {
+    // Same raw record for both pairs: 1 miss, then 3 hits. Only the gap
+    // between the miss and the hits differs, so raw counts cannot decide.
+    const recent = [wrong(3, 4), right(3, 4), right(3, 4), right(3, 4)];
+    const stale = [
+      wrong(3, 4),
+      ...Array.from({ length: 30 }, idle),
+      right(3, 4), right(3, 4), right(3, 4),
+    ];
+    expect(rateOf(recent, 3, 4)).toBeGreaterThanOrEqual(REVIEW_MIN_RATE);
+    expect(rateOf(stale, 3, 4)).toBeLessThan(REVIEW_MIN_RATE);
+
+    expect(trickiestPairs(recent)).toHaveLength(1);
+    expect(trickiestPairs(stale)).toHaveLength(0);
+  });
+
+  test('the list and the heat-map colour share the cut-off', () => {
+    expect(rateBucket(REVIEW_MIN_RATE)).not.toBe('0');
+    expect(rateBucket(REVIEW_MIN_RATE - 1e-9)).toBe('0');
   });
 });
 
