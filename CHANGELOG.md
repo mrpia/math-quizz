@@ -48,6 +48,14 @@ and the project uses [Semantic Versioning](https://semver.org/).
   154 entries to 99 facts, so a session only repeats a fact past 99 questions.
 
 ### Fixed
+- **Stored settings are sanitised on load** (#46). `loadSettings` spread
+  whatever localStorage held over `DEFAULT_SETTINGS`, so a hand-edited or
+  newer-version blob reached `generateQuestions` unchecked: `questionCount: 0`
+  threw on Lancer and blanked the screen, and an unknown `mode` was used as the
+  operator. It now runs the blob through the importer's `sanitizeSettings`
+  (now exported from `backup.ts`), so both ways in share one set of bounds and
+  enum checks. Side effect: setting keys this version does not know are dropped
+  on load, as they already were on import.
 - **One old miss kept a pair in "Paires à revoir" forever** (#43).
   `trickiestPairs` kept any pair with a weighted failure rate above zero, and
   recency weights halve every ten sessions but never reach zero. A child who

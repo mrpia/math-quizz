@@ -72,6 +72,34 @@ describe('settings', () => {
     expect(loaded.durationPerQuestionMs).toBe(5000);
     expect(loaded.partialCreditFactor).toBe(DEFAULT_SETTINGS.partialCreditFactor);
   });
+
+  // #46: the load path used to trust storage; a damaged blob reached
+  // generateQuestions, which throws on questionCount 0.
+  test('loadSettings sanitises damaged values like the importer does', () => {
+    localStorage.setItem(
+      storageKeys('default').settings,
+      JSON.stringify({
+        durationPerQuestionMs: 5000,
+        questionCount: 0,
+        selectedTables: [],
+        mode: 'pow',
+        answerMode: 'telepathy',
+        partialCreditFactor: 7,
+      }),
+    );
+    const loaded = loadSettings('default');
+    expect(loaded.durationPerQuestionMs).toBe(5000);
+    expect(loaded.questionCount).toBe(1);
+    expect(loaded.selectedTables).toEqual(DEFAULT_SETTINGS.selectedTables);
+    expect(loaded.mode).toBe(DEFAULT_SETTINGS.mode);
+    expect(loaded.answerMode).toBe('screen');
+    expect(loaded.partialCreditFactor).toBe(1);
+  });
+
+  test('loadSettings falls back to defaults when storage holds a non-object', () => {
+    localStorage.setItem(storageKeys('default').settings, '42');
+    expect(loadSettings('default')).toEqual(DEFAULT_SETTINGS);
+  });
 });
 
 describe('history', () => {

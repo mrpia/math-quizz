@@ -1,6 +1,5 @@
-import { DEFAULT_SETTINGS } from '../domain/session';
 import type { Settings, SessionResult } from '../domain/session';
-import { createBackup } from '../domain/backup';
+import { createBackup, sanitizeSettings } from '../domain/backup';
 import { aggregatePairs, chronological, trackedSessions } from '../domain/stats';
 import type { PairCounterMap } from '../domain/stats';
 import type { Backup } from '../domain/backup';
@@ -49,13 +48,16 @@ const safeParse = <T>(raw: string | null, fallback: T): T => {
   }
 };
 
-export const loadSettings = (profileId: string): Settings => {
-  const stored = safeParse<Partial<Settings>>(
-    localStorage.getItem(storageKeys(profileId).settings),
-    {},
+/**
+ * Storage is not trusted any more than an imported file is (#46): a hand-edited
+ * blob, or one written by a newer version, goes through the importer's
+ * sanitiser, so `questionCount: 0` or an unknown `mode` never reaches
+ * `generateQuestions`. Fields this version does not know are dropped.
+ */
+export const loadSettings = (profileId: string): Settings =>
+  sanitizeSettings(
+    safeParse<unknown>(localStorage.getItem(storageKeys(profileId).settings), {}),
   );
-  return { ...DEFAULT_SETTINGS, ...stored };
-};
 
 export const saveSettings = (profileId: string, settings: Settings): void => {
   localStorage.setItem(storageKeys(profileId).settings, JSON.stringify(settings));
