@@ -83,11 +83,19 @@ const weightedPick = <T>(items: T[], weights: number[], total: number): T => {
   return items[items.length - 1];
 };
 
+/**
+ * The one definition of the right answer: `a × b` asks for the product,
+ * `(a×b) ÷ a` asks for `b`. `validateBackup` checks imported questions
+ * against it, so a hand-edited `expected` cannot turn a wrong answer right.
+ */
+export const expectedAnswer = (a: number, b: number, op: Operator): number =>
+  op === 'mul' ? a * b : b;
+
 const buildQuestion = (a: number, b: number, op: Operator): Question => ({
   a,
   b,
   op,
-  expected: op === 'mul' ? a * b : b,
+  expected: expectedAnswer(a, b, op),
 });
 
 export const formatOperation = (q: Question): string =>

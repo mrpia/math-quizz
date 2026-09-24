@@ -15,6 +15,9 @@ import {
 import type { Backup, BackupData } from '../domain/backup';
 import { DEFAULT_SETTINGS } from '../domain/session';
 import type { SessionResult } from '../domain/session';
+import { expectedAnswer, generateQuestions } from '../domain/question';
+import type { Question } from '../domain/question';
+import { MULTIPLICANDS, MULTIPLIERS } from '../domain/tables';
 
 const session = (minute: number): SessionResult => ({
   startedAt: new Date(Date.UTC(2026, 4, 9, 8, minute, 0)).toISOString(),
@@ -179,6 +182,93 @@ describe('validateBackup — sessions', () => {
   });
 });
 
+describe('validateBackup — questions must be consistent (#45)', () => {
+  const withHistory = (history: unknown) =>
+    validateBackup({ format: BACKUP_FORMAT, formatVersion: 1, data: { history } });
+  const withQuestion = (question: Question) => [
+    { ...session(1), answers: [{ question, given: question.expected, elapsedMs: 1 }] },
+  ];
+
+  it.each<[string, Question]>([
+    ['a product whose expected is not a×b', { a: 7, b: 8, op: 'mul', expected: 999 }],
+    ['a division whose expected is not b', { a: 7, b: 8, op: 'div', expected: 56 }],
+    ['a table outside MULTIPLICANDS', { a: 13, b: 8, op: 'mul', expected: 104 }],
+    ['a multiplier outside MULTIPLIERS', { a: 7, b: 13, op: 'mul', expected: 91 }],
+  ])('rejects %s', (_label, question) => {
+    expect(withHistory(withQuestion(question))).toEqual({ ok: false, problem: 'corrupt' });
+  });
+
+  it('rejects the whole file for one bad record among valid ones', () => {
+    const tainted = {
+      ...session(2),
+      answers: [
+        session(2).answers[0],
+        { question: { a: 7, b: 8, op: 'mul', expected: 999 }, given: 999, elapsedMs: 1 },
+      ],
+    };
+    expect(withHistory([session(1), tainted, session(3)])).toEqual({
+      ok: false,
+      problem: 'corrupt',
+    });
+  });
+
+  it('accepts every pair the tables allow, in both directions', () => {
+    const questions = MULTIPLICANDS.flatMap((a) =>
+      MULTIPLIERS.flatMap((b) =>
+        (['mul', 'div'] as const).map((op) => ({ a, b, op, expected: expectedAnswer(a, b, op) })),
+      ),
+    );
+    const history = [{ ...session(1), answers: questions.map((question) => ({
+      question,
+      given: question.expected,
+      elapsedMs: 1,
+    })) }];
+    expect(ok(withHistory(history)).data.history[0].answers).toHaveLength(questions.length);
+  });
+
+  // The guard against locking a child out of their own backup: whatever the
+  // generator can draw, an export of it must import again.
+  it.each(['mul', 'div', 'mix'] as const)(
+    'round-trips a %s history drawn over every table',
+    (mode) => {
+      const draws = [
+        ...MULTIPLICANDS.map((table) => [table]),
+        [...MULTIPLICANDS], // all at once, so reversible pairs get swapped too
+      ];
+      const history = draws.map((selectedTables, i): SessionResult => {
+        const settings = { ...DEFAULT_SETTINGS, selectedTables, mode, questionCount: 150 };
+        return {
+          ...session(i),
+          selectedTables,
+          mode,
+          questionCount: settings.questionCount,
+          answers: generateQuestions(settings).map((question) => ({
+            question,
+            given: question.expected,
+            elapsedMs: 1,
+          })),
+        };
+      });
+      const exported = serializeBackup(createBackup({ ...data, history }, meta));
+      expect(ok(parseBackup(exported)).data.history).toEqual(history);
+    },
+  );
+
+  it('still accepts paper and training records — the rule is about question, not given', () => {
+    const paper = {
+      ...session(1),
+      answerMode: 'paper',
+      answers: [{ ...session(1).answers[0], given: null, selfMarkedCorrect: false }],
+    };
+    const training = {
+      ...session(2),
+      answerMode: 'training',
+      answers: [{ ...session(2).answers[0], given: 54, selfMarkedCorrect: false }],
+    };
+    expect(ok(withHistory([paper, training])).data.history).toHaveLength(2);
+  });
+});
+
 describe('validateBackup — the deprecated errors section', () => {
   it('still accepts a v1 file that carries it, so old backups keep working', () => {
     const backup = ok(
@@ -303,6 +393,12 @@ describe('published JSON Schema (drift guard)', () => {
     // v1 files in the wild still carry it; removing it from the schema would
     // make them fail validation against the URL they name.
     expect(schema.properties.data.properties.errors.deprecated).toBe(true);
+  });
+
+  it('allows exactly the operands validateBackup allows', () => {
+    const { a, b } = schema.$defs.question.properties;
+    expect(a.enum).toEqual([...MULTIPLICANDS]);
+    expect(b.enum).toEqual([...MULTIPLIERS]);
   });
 
   it('documents every top-level and data field', () => {

@@ -100,7 +100,10 @@ recent one.
 **Questions are stored as a pair, never as rendered text.** A question is
 `{ a, b, op, expected }`. For `op: "mul"` the child sees `a × b` and `expected`
 is `a×b`. For `op: "div"` the child sees `(a×b) ÷ a` and `expected` is `b`. The
-same stored pair backs both directions.
+same stored pair backs both directions. Import enforces this: `a` must be one of
+the tables (2–12, 15, 24, 25), `b` one of the multipliers (2–12), and `expected`
+the right answer for `op`. A single question that breaks any of the three makes
+the whole file corrupt, the same as any other structural fault.
 
 **Error keys are canonical.** `errors` is keyed `"<low>x<high>"` with the
 operands sorted ascending, so 7×8, 8×7 and 56÷7 all accumulate under `"7x8"`.
