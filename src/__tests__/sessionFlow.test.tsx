@@ -52,6 +52,32 @@ describe('SessionScreen flow', () => {
     expect(result!.answers[2].given).toBe(1);
   });
 
+  test('stamps answerMode: screen on the result, like training and paper do', () => {
+    let result: SessionResult | null = null;
+    render(<SessionScreen profileId="default" settings={settings} onComplete={(r) => (result = r)} />);
+    for (let i = 0; i < 3; i++) {
+      fireEvent.keyDown(window, { key: '1' });
+      fireEvent.keyDown(window, { key: 'Enter' });
+    }
+    expect(result!.answerMode).toBe('screen');
+  });
+
+  test('a leading zero is dropped as typed: 0, 4, 9 shows and records 49', () => {
+    let result: SessionResult | null = null;
+    render(<SessionScreen profileId="default" settings={settings} onComplete={(r) => (result = r)} />);
+    fireEvent.keyDown(window, { key: '0' });
+    fireEvent.keyDown(window, { key: '4' });
+    fireEvent.keyDown(window, { key: '9' });
+    expect(screen.queryByText('049')).toBeNull();
+    expect(screen.getByText('49')).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Enter' });
+    for (let i = 0; i < 2; i++) {
+      fireEvent.keyDown(window, { key: '1' });
+      fireEvent.keyDown(window, { key: 'Enter' });
+    }
+    expect(result!.answers[0].given).toBe(49);
+  });
+
   test('time past target does NOT auto-advance — child can take all the time they need', () => {
     let result: SessionResult | null = null;
     render(<SessionScreen profileId="default" settings={settings} onComplete={(r) => (result = r)} />);

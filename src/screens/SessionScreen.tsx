@@ -8,6 +8,7 @@ import { Timer } from '../components/Timer';
 import { QuestionCard } from '../components/QuestionCard';
 import { CancelButton } from '../components/CancelButton';
 import { useNumericKeyboard } from '../hooks/useNumericKeyboard';
+import { appendDigit } from '../domain/answerInput';
 import { useI18n } from '../i18n/I18nContext';
 import './SessionScreen.css';
 
@@ -44,6 +45,7 @@ export const SessionScreen = ({ profileId, settings, onComplete, onCancel }: Pro
       selectedTables: [...settings.selectedTables],
       mode: settings.mode,
       answers: recordsSoFar,
+      answerMode: 'screen',
     });
   };
 
@@ -66,7 +68,7 @@ export const SessionScreen = ({ profileId, settings, onComplete, onCancel }: Pro
   };
 
   const handleDigit = (d: number) => {
-    setGiven((prev) => (prev.length >= 4 ? prev : prev + String(d)));
+    setGiven((prev) => appendDigit(prev, d));
   };
 
   const handleErase = () => setGiven((prev) => prev.slice(0, -1));

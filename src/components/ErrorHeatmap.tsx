@@ -27,10 +27,12 @@ export const ErrorHeatmap = ({ grid }: Props) => {
                 {row[0].a}
               </th>
               {row.map((cell) => {
+                // Colour is weighted, the number is raw — same split as the
+                // "Paires à revoir" list, so the two never disagree.
                 const label =
                   cell.errorRate === null
                     ? `${cell.a}×${cell.b} — ${t('heatmap.notPlayed')}`
-                    : `${cell.a}×${cell.b} — ${Math.round(cell.errorRate * 100)}%`;
+                    : `${cell.a}×${cell.b} — ${cell.failures} / ${cell.attempts}`;
                 return (
                   <td
                     key={`${cell.a}x${cell.b}`}

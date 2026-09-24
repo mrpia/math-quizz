@@ -8,9 +8,19 @@ export type AdaptiveDraw = 'off' | 'moderate' | 'strong';
 
 export type AnswerRecord = {
   question: Question;
+  /**
+   * The typed answer. `null` in paper records (the app never sees the sheet)
+   * and in legacy screen records from when a question could time out; no
+   * current mode produces a timeout.
+   */
   given: number | null;
   elapsedMs: number;
-  /** Set only for pen-and-paper records (self-marked on the results screen). */
+  /**
+   * The verdict, when it does not come from comparing `given` with `expected`.
+   * Paper: the child's own mark on the results screen. Training: the app's
+   * check, stored at answer time next to a numeric `given`. Absent on screen
+   * records.
+   */
   selfMarkedCorrect?: boolean;
 };
 
@@ -23,7 +33,8 @@ export type SessionResult = {
   mode: Mode;
   answers: AnswerRecord[];
   /**
-   * Missing on legacy history entries; treat absent as 'screen'. Never 'list' —
+   * Missing on legacy history entries (screen sessions up to 1.1.0 never set
+   * it); treat absent as 'screen'. Never 'list' —
    * the list mode is a view and does not record a session.
    */
   answerMode?: AnswerMode;

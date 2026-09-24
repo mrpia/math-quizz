@@ -105,10 +105,22 @@ same stored pair backs both directions.
 **Error keys are canonical.** `errors` is keyed `"<low>x<high>"` with the
 operands sorted ascending, so 7×8, 8×7 and 56÷7 all accumulate under `"7x8"`.
 
-**Paper mode has no `given`.** When answers are written on paper the app never
-sees them: `given` is `null` and `selfMarkedCorrect` records what the child
-ticked on the results screen. When present, that flag overrides the
-`given`/`expected` comparison for both scoring and statistics.
+**`selfMarkedCorrect`, when present, is the verdict.** It overrides the
+`given`/`expected` comparison for both scoring and statistics. Two modes write
+it:
+
+- **paper**: the app never sees the written answer, so `given` is `null` and
+  the flag is what the child ticked on the results screen;
+- **training**: `given` is the number typed, and the flag is the app's own check,
+  stored at answer time.
+
+Screen records leave it out and are judged on `given === expected`.
+
+**A `null` `given` outside paper mode is legacy data.** Older versions cut a
+screen question off when time ran out and stored `given: null`. No current mode
+does that: a screen question waits for an answer however long it takes. Exports
+may still carry such records from old histories, and the app still counts them
+as timeouts.
 
 ## How the importer treats a file
 
@@ -147,7 +159,7 @@ tooling works. A few examples:
 
 ```bash
 # Score of every recorded test, as a ratio.
-# selfMarkedCorrect wins when present — in paper mode `given` is always null.
+# selfMarkedCorrect wins when present (paper and training records carry it).
 jq '.data.history[] | {
       at: .startedAt,
       correct: ([.answers[] | select(

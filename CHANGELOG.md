@@ -21,6 +21,27 @@ and the project uses [Semantic Versioning](https://semver.org/).
   now go through `formatPoints` in `src/domain/format.ts`, which keeps two
   decimals like `formatSeconds`: the Settings input's 0.1 step is only a hint,
   and neither Settings nor the backup import rounds the factor.
+- **Reporting inconsistencies** (#42). None of these changed a score or a
+  statistic:
+  - The heat-map tooltip showed the recency-weighted rate ("7×8 — 32%") while
+    the "Paires à revoir" row for the same pair read "2 / 6". The tooltip now
+    shows the raw count, as the list does. Colour stays weighted. `GridCell`
+    gains a raw `failures` field for this.
+  - A leading zero is dropped as it is typed, calculator-style: 0, 4, 9 now
+    reads "49" instead of "049". "0" on its own is still an answer. The rule
+    and the 4-digit cap now live in `appendDigit` (`src/domain/answerInput.ts`),
+    which the screen and training modes share.
+  - Screen sessions are now stored with `answerMode: "screen"`. Training and
+    paper already stamped theirs. Readers should still treat an absent value as
+    `screen`.
+  - The home summary says "1 question" / "1 Frage" / "1 opération" when the
+    count is 1, in all three languages.
+  - Docs only: the `selfMarkedCorrect` and `given` descriptions in the backup
+    schema, `docs/data-format.md` and `session.ts` said the flag was paper-only.
+    Training sets it too. They also described `given: null` as a live timeout,
+    but no current mode produces one. They now describe both modes, and present
+    null screen answers as legacy data. The change is additive, so
+    `formatVersion` stays 1.
 
 ## [1.1.0] - 2026-09-23
 

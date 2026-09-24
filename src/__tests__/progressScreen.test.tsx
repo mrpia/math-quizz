@@ -45,6 +45,24 @@ describe('ProgressScreen', () => {
     expect(screen.getByText('7 × 8')).toBeInTheDocument();
   });
 
+  test('heat-map tooltip shows the same raw count as the list, not the weighted %', () => {
+    // Two sessions, so the weighted rate (older failures discounted) differs
+    // from the raw 2 / 6 and a percentage would give the game away.
+    const fixed = session({
+      startedAt: '2026-01-02T00:00:00.000Z',
+      answers: [
+        { question: { a: 7, b: 8, op: 'mul', expected: 56 }, given: 56, elapsedMs: 1000 },
+        { question: { a: 7, b: 8, op: 'mul', expected: 56 }, given: 56, elapsedMs: 1000 },
+        { question: { a: 7, b: 8, op: 'mul', expected: 56 }, given: 56, elapsedMs: 1000 },
+      ],
+    });
+    localStorage.setItem(storageKeys('default').history, JSON.stringify([session(), fixed]));
+    render(<ProgressScreen {...profileProps} onBack={() => {}} />);
+    const cell = screen.getByLabelText(/^7×8 — /);
+    expect(cell).toHaveAttribute('aria-label', '7×8 — 2 / 6');
+    expect(cell).toHaveAttribute('title', '7×8 — 2 / 6');
+  });
+
   test('back button calls onBack', () => {
     const onBack = vi.fn();
     render(<ProgressScreen {...profileProps} onBack={onBack} />);
