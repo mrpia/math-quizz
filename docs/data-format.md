@@ -169,11 +169,27 @@ jq '.data.history[] | {
       total: (.answers | length)
     }' math-quizz-backup-2026-09-05.json
 
-# The ten shakiest pairs by error rate
-jq -r '.data.errors | to_entries
-       | map(select(.value.attempts >= 3))
-       | sort_by((.value.errors + .value.timeouts) / .value.attempts) | reverse
-       | .[:10][] | "\(.key)\t\((.value.errors + .value.timeouts) / .value.attempts)"' \
+# The ten shakiest pairs, as "Paires à revoir" ranks them: filed under the
+# canonical key, ranked by the recency-weighted failure share, shown with raw
+# counts. Pairs seen fewer than 3 times are left out, as in the app.
+jq -r '.data.history
+  | length as $n
+  | [ to_entries[]
+      | pow(0.5; ($n - 1 - .key) / 10) as $w
+      | .value.answers[]
+      | { key: ([.question.a, .question.b] | sort | "\(.[0])x\(.[1])"),
+          w: $w,
+          failed: (if has("selfMarkedCorrect") then .selfMarkedCorrect | not
+                   else .given != .question.expected end) } ]
+  | group_by(.key)
+  | map({ key: .[0].key,
+          attempts: length,
+          failures: (map(select(.failed)) | length),
+          rate: ((map(select(.failed) | .w) | add // 0) / (map(.w) | add)) })
+  | map(select(.attempts >= 3 and .rate > 0))
+  | sort_by(-.rate)
+  | .[:10][]
+  | "\(.key)\t\(.failures) / \(.attempts)\t\(.rate * 100 | round)%"' \
    math-quizz-backup-2026-09-05.json
 ```
 

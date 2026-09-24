@@ -42,6 +42,11 @@ and the project uses [Semantic Versioning](https://semver.org/).
     but no current mode produces one. They now describe both modes, and present
     null screen answers as legacy data. The change is additive, so
     `formatVersion` stays 1.
+  - Docs only: the "ten shakiest pairs" `jq` example in `docs/data-format.md`
+    read `.data.errors`, a deprecated section that exports no longer carry, so
+    it printed nothing. It now derives the ranking from `history` the way the
+    app does, using the canonical key, `selfMarkedCorrect` and the recency
+    weighting, and prints raw counts.
 
 ## [1.1.0] - 2026-09-23
 
