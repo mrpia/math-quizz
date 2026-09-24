@@ -60,6 +60,9 @@ and the project uses [Semantic Versioning](https://semver.org/).
   `docs/data-format.md` say the arithmetic rule is enforced. `formatVersion`
   stays 1: the multipliers 1 and 15 were dropped on 2026-06-13, before the
   first deployed build, so no released version wrote a record this rejects.
+  This does narrow the published v1 schema for third-party writers: a
+  hand-built file with, say, `a: 13` validated before and no longer does.
+  No file the app wrote is affected.
 - **Stored settings are sanitised on load** (#46). `loadSettings` spread
   whatever localStorage held over `DEFAULT_SETTINGS`, so a hand-edited or
   newer-version blob reached `generateQuestions` unchecked: `questionCount: 0`

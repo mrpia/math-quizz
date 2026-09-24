@@ -95,7 +95,9 @@ documented field — so a new field with no documentation fails `pnpm test`.
 
 Additive changes keep `formatVersion: 1`. Anything that would make an existing
 export unreadable bumps it and ships a `-v2` schema next to v1; the old URL keeps
-resolving.
+resolving. Narrowing to what the app has always written (rejecting values no
+released version produced, as #45 did for question operands) also keeps v1, but
+say in the changelog that it narrows the schema for third-party writers.
 
 **A backup is one profile, and the registry is not in it.** `profile` (an id)
 and `profileName` are informational; the import destination is always the
