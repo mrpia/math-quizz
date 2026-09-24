@@ -5,6 +5,8 @@ import {
   adaptiveAlpha,
   ADAPTIVE_ALPHA,
   UNPRACTISED_RATE,
+  UNPRACTISED_PRIOR_ATTEMPTS,
+  drawRate,
 } from '../domain/question';
 import { MULTIPLIERS } from '../domain/tables';
 import type { Settings } from '../domain/session';
@@ -186,16 +188,18 @@ describe('generateQuestions — adaptive draw', () => {
   const UNIFORM = 1 / MULTIPLIERS.length;
 
   test('draws a shaky pair more often than a uniform draw would', () => {
-    // strong (α=5): 7×8 weighs 6, the ten others 1 → about 6/16 = 37.5%.
+    // strong (α=5), with the prior: 7×8 rates 5.5/7 and weighs 4.93, the ten
+    // mastered pairs rate 0.5/7 and weigh 1.36 → about 4.93/18.5 = 26.6%.
     const share = shareOf7x8(baseSettings({ adaptiveDraw: 'strong' }), shakyOn7x8());
-    expect(share).toBeGreaterThan(0.28);
+    expect(share).toBeGreaterThan(0.22);
   });
 
   test('a stronger setting biases harder', () => {
     const stats = shakyOn7x8();
     const moderate = shareOf7x8(baseSettings({ adaptiveDraw: 'moderate' }), stats);
     const strong = shareOf7x8(baseSettings({ adaptiveDraw: 'strong' }), stats);
-    expect(moderate).toBeGreaterThan(UNIFORM * 1.8);
+    // moderate (α=2): 2.57 against ten 1.14 → about 18%.
+    expect(moderate).toBeGreaterThan(UNIFORM * 1.6);
     expect(strong).toBeGreaterThan(moderate);
   });
 
@@ -222,13 +226,13 @@ describe('generateQuestions — adaptive draw', () => {
       baseSettings({ selectedTables: [8], adaptiveDraw: 'strong' }),
       { ...mastered(8), '7x8': counters({ weightedFailures: 5 }) },
     );
-    expect(share).toBeGreaterThan(0.28);
+    expect(share).toBeGreaterThan(0.22);
   });
 
   test('a pair never practised comes up more often than a mastered one', () => {
-    // strong: 7×8 weighs 1 + 5 × 0.25 = 2.25 against ten 1s → about 18%.
+    // strong: 7×8 weighs 1 + 5 × 0.25 = 2.25 against ten 1.36 → about 14%.
     const share = shareOf7x8(baseSettings({ adaptiveDraw: 'strong' }), unseen7x8());
-    expect(share).toBeGreaterThan(UNIFORM * 1.5);
+    expect(share).toBeGreaterThan(UNIFORM * 1.3);
   });
 
   test('...but less often than a pair the child keeps missing', () => {
@@ -244,7 +248,7 @@ describe('generateQuestions — adaptive draw', () => {
       if (q.b === 8) unseen++;
       if (q.b === 9) missed++;
     }
-    // Expected about 520 against 1390.
+    // 2.25 against 4.93: expected about 460 against 1020.
     expect(missed).toBeGreaterThan(unseen * 1.8);
   });
 
@@ -279,12 +283,12 @@ describe('generateQuestions — adaptive draw', () => {
 
   test('repetitions beyond the pool are weighted too', () => {
     const questions = generateQuestions(
-      baseSettings({ questionCount: 200, adaptiveDraw: 'strong' }),
+      baseSettings({ questionCount: 400, adaptiveDraw: 'strong' }),
       shakyOn7x8(),
     );
-    expect(questions).toHaveLength(200);
-    // 11 guaranteed once, 189 extras at ~37.5% → about 72; uniform gives ~18.
-    expect(questions.filter(is7x8).length).toBeGreaterThan(40);
+    expect(questions).toHaveLength(400);
+    // 11 guaranteed once, 389 extras at ~26.6% → about 104; uniform gives ~36.
+    expect(questions.filter(is7x8).length).toBeGreaterThan(70);
   });
 });
 
@@ -292,6 +296,34 @@ describe('UNPRACTISED_RATE', () => {
   test('sits between a mastered pair and one missed half the time', () => {
     expect(UNPRACTISED_RATE).toBeGreaterThan(0);
     expect(UNPRACTISED_RATE).toBeLessThan(0.5);
+  });
+});
+
+describe('drawRate — confidence builds gradually (#50)', () => {
+  const seen = (weightedAttempts: number, weightedFailures: number) =>
+    counters({ weightedAttempts, weightedFailures });
+
+  test('a pair never practised gets UNPRACTISED_RATE', () => {
+    expect(drawRate(undefined)).toBe(UNPRACTISED_RATE);
+    expect(drawRate(seen(0, 0))).toBe(UNPRACTISED_RATE);
+  });
+
+  test('one correct answer leaves a pair above a mastered one', () => {
+    const once = drawRate(seen(1, 0));
+    expect(once).toBeLessThan(UNPRACTISED_RATE);
+    expect(once).toBeGreaterThan(drawRate(seen(5, 0)));
+    expect(once).toBeCloseTo((UNPRACTISED_RATE * UNPRACTISED_PRIOR_ATTEMPTS) / 3);
+  });
+
+  test('one wrong answer boosts a pair, but not to the ceiling', () => {
+    const once = drawRate(seen(1, 1));
+    expect(once).toBeGreaterThan(UNPRACTISED_RATE);
+    expect(once).toBeLessThan(drawRate(seen(5, 5)));
+  });
+
+  test('with enough evidence the rate approaches the observed one', () => {
+    expect(drawRate(seen(20, 0))).toBeLessThan(0.03);
+    expect(drawRate(seen(20, 20))).toBeGreaterThan(0.9);
   });
 });
 

@@ -1,7 +1,7 @@
 import { MULTIPLIERS } from './tables';
 import type { AdaptiveDraw, Settings } from './session';
-import { canonicalKey, weightedErrorRate } from './stats';
-import type { PairCounterMap } from './stats';
+import { canonicalKey } from './stats';
+import type { PairCounterMap, PairCounters } from './stats';
 
 export type Operator = 'mul' | 'div';
 export type Mode = 'mul' | 'div' | 'mix';
@@ -23,7 +23,7 @@ const fisherYates = <T>(items: T[]): T[] => {
 };
 
 /**
- * α in `weight = 1 + α × weightedErrorRate`. At 2, a pair missed every time
+ * α in `weight = 1 + α × drawRate`. At 2, a pair missed every time
  * recently is three times as likely to come up as one the child has mastered;
  * at 5, six times. Stored settings name the level, not the number, so the
  * curve can be retuned without touching anyone's saved data.
@@ -46,19 +46,35 @@ export const adaptiveAlpha = (settings: Settings): number =>
 export const UNPRACTISED_RATE = 0.25;
 
 /**
- * Recency-weighted on purpose — raw counters would keep drilling a pair the
- * child fixed months ago (see "Statistics are recency-weighted" in CLAUDE.md).
+ * How many attempts' worth of `UNPRACTISED_RATE` every pair starts with. Without
+ * it one lucky answer dropped a pair straight to the floor, next to pairs proven
+ * twenty times, and one slip sent it to the ceiling (#50). At 2, one correct
+ * answer rates 0.17 and one miss 0.5; the pair's own record takes over after a
+ * handful of attempts.
  */
+export const UNPRACTISED_PRIOR_ATTEMPTS = 2;
+
+/**
+ * The failure rate the draw weights a pair by: its recency-weighted rate pulled
+ * toward `UNPRACTISED_RATE` by `UNPRACTISED_PRIOR_ATTEMPTS` pseudo-attempts. A
+ * pair never practised is the same formula with nothing observed. Recency-
+ * weighted on purpose (raw counters would keep drilling a pair the child fixed
+ * months ago), and draw-only: the progress screen shows `weightedErrorRate`
+ * and has its own confidence threshold on raw attempts.
+ */
+export const drawRate = (counters: PairCounters | undefined): number => {
+  const k = UNPRACTISED_PRIOR_ATTEMPTS;
+  const failures = counters?.weightedFailures ?? 0;
+  const attempts = counters?.weightedAttempts ?? 0;
+  return (failures + UNPRACTISED_RATE * k) / (attempts + k);
+};
+
 const pairWeight = (
   a: number,
   b: number,
   stats: PairCounterMap | undefined,
   alpha: number,
-): number => {
-  const counters = stats?.[canonicalKey(a, b)];
-  const rate = counters ? weightedErrorRate(counters) : null;
-  return 1 + alpha * (rate ?? UNPRACTISED_RATE);
-};
+): number => 1 + alpha * drawRate(stats?.[canonicalKey(a, b)]);
 
 /**
  * Weighted sampling without replacement (Efraimidis–Spirakis): each item gets
