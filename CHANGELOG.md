@@ -48,6 +48,14 @@ and the project uses [Semantic Versioning](https://semver.org/).
   154 entries to 99 facts, so a session only repeats a fact past 99 questions.
 
 ### Fixed
+- **An emptied Settings field no longer saves as the minimum** (#49). The
+  three numeric inputs converted with `Number(e.target.value)`, and a cleared
+  `type="number"` field reports `''`, so `Number('')` gave 0. The clamp in
+  `submit` then saved 1 s, 1 question or 0 credit without a warning, while
+  React wrote the 0 back into the field, so the screen showed "0" and stored
+  something else. `SettingsScreen` now holds the fields as their raw text and
+  parses on save: anything that is not a finite number keeps the value already
+  saved. Real numbers out of range are still clamped.
 - **Import rejects questions the app could never have asked** (#45).
   `isQuestion` only checked that `a`, `b` and `expected` were numbers, so a
   hand-edited `{ a: 7, b: 8, op: "mul", expected: 999 }` answered 999 imported

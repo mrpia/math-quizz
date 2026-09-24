@@ -46,6 +46,15 @@ const IMPORT_ERRORS: Record<BackupProblem, TranslationKey> = {
 const clamp = (value: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, value));
 
+// A cleared field, or text the browser cannot read as a number yet ("4." while
+// typing), reports ''. Number('') is 0, which the clamp turned into the
+// minimum and saved without a word (#49), so anything that does not parse
+// keeps the value already saved.
+const readNumber = (raw: string, fallback: number) => {
+  const value = Number(raw);
+  return raw.trim() !== '' && Number.isFinite(value) ? value : fallback;
+};
+
 const SECONDS_MIN = SETTINGS_BOUNDS.durationPerQuestionMs.min / 1000;
 const SECONDS_MAX = SETTINGS_BOUNDS.durationPerQuestionMs.max / 1000;
 
@@ -59,9 +68,11 @@ export const SettingsScreen = ({
   onImport,
   onBack,
 }: Props) => {
-  const [seconds, setSeconds] = useState(settings.durationPerQuestionMs / 1000);
-  const [count, setCount] = useState(settings.questionCount);
-  const [partial, setPartial] = useState(settings.partialCreditFactor);
+  // Held as the text in the field, not as numbers: a number state turns an
+  // emptied field into 0, and React then writes that 0 back into it.
+  const [seconds, setSeconds] = useState(String(settings.durationPerQuestionMs / 1000));
+  const [count, setCount] = useState(String(settings.questionCount));
+  const [partial, setPartial] = useState(String(settings.partialCreditFactor));
   const [confirming, setConfirming] = useState(false);
   const [pendingImport, setPendingImport] = useState<Backup | null>(null);
   // Where a picked file will land. Defaults to the profile in use; the picker
@@ -80,13 +91,21 @@ export const SettingsScreen = ({
     onSave({
       ...settings,
       durationPerQuestionMs: Math.round(
-        clamp(seconds, SECONDS_MIN, SECONDS_MAX) * 1000,
+        clamp(
+          readNumber(seconds, settings.durationPerQuestionMs / 1000),
+          SECONDS_MIN,
+          SECONDS_MAX,
+        ) * 1000,
       ),
       questionCount: Math.round(
-        clamp(count, SETTINGS_BOUNDS.questionCount.min, SETTINGS_BOUNDS.questionCount.max),
+        clamp(
+          readNumber(count, settings.questionCount),
+          SETTINGS_BOUNDS.questionCount.min,
+          SETTINGS_BOUNDS.questionCount.max,
+        ),
       ),
       partialCreditFactor: clamp(
-        partial,
+        readNumber(partial, settings.partialCreditFactor),
         SETTINGS_BOUNDS.partialCreditFactor.min,
         SETTINGS_BOUNDS.partialCreditFactor.max,
       ),
@@ -141,9 +160,9 @@ export const SettingsScreen = ({
     // this form exactly as it was.
     if (importTarget === registry.active) {
       const imported = pendingImport.data.settings;
-      setSeconds(imported.durationPerQuestionMs / 1000);
-      setCount(imported.questionCount);
-      setPartial(imported.partialCreditFactor);
+      setSeconds(String(imported.durationPerQuestionMs / 1000));
+      setCount(String(imported.questionCount));
+      setPartial(String(imported.partialCreditFactor));
     }
     setPendingImport(null);
     setNotice({ kind: 'info', key: 'settings.importDone' });
@@ -174,7 +193,7 @@ export const SettingsScreen = ({
           min={SECONDS_MIN}
           max={SECONDS_MAX}
           value={seconds}
-          onChange={(e) => setSeconds(Number(e.target.value))}
+          onChange={(e) => setSeconds(e.target.value)}
         />
         <span className="settings__hint">
           {t('settings.targetTimeHint')}
@@ -190,7 +209,7 @@ export const SettingsScreen = ({
           min={SETTINGS_BOUNDS.questionCount.min}
           max={SETTINGS_BOUNDS.questionCount.max}
           value={count}
-          onChange={(e) => setCount(Number(e.target.value))}
+          onChange={(e) => setCount(e.target.value)}
         />
       </label>
 
@@ -204,7 +223,7 @@ export const SettingsScreen = ({
           min={SETTINGS_BOUNDS.partialCreditFactor.min}
           max={SETTINGS_BOUNDS.partialCreditFactor.max}
           value={partial}
-          onChange={(e) => setPartial(Number(e.target.value))}
+          onChange={(e) => setPartial(e.target.value)}
         />
         <span className="settings__hint">{t('settings.partialCreditHint')}</span>
       </label>
