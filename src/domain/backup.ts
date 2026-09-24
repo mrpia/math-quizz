@@ -14,9 +14,10 @@
  *   child a partial history that looks complete, and a bad pair key would reach
  *   `trickiestPairs`, whose `key.split('x').map(Number)` then renders
  *   "NaN × NaN";
- * - **settings are sanitised, not rejected** — every setting has a safe default
- *   and `loadSettings` is already merge-tolerant, so an out-of-range number is
- *   clamped and an unknown enum value falls back. Notably `selectedTables` can
+ * - **settings are sanitised, not rejected** — every setting has a safe default,
+ *   so an out-of-range number is clamped and an unknown enum value falls back.
+ *   `loadSettings` runs stored settings through the same `sanitizeSettings`
+ *   (#46), so the two ways in cannot drift. Notably `selectedTables` can
  *   never end up empty: `generateQuestions` throws on an empty selection.
  */
 import { DEFAULT_SETTINGS, SETTINGS_BOUNDS } from './session';
@@ -217,7 +218,7 @@ const readTables = (value: unknown): number[] => {
   return kept.length > 0 ? kept : DEFAULT_SETTINGS.selectedTables;
 };
 
-const sanitizeSettings = (value: unknown): Settings => {
+export const sanitizeSettings = (value: unknown): Settings => {
   const raw = isRecord(value) ? value : {};
   return {
     durationPerQuestionMs: readNumber(
