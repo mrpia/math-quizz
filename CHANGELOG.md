@@ -46,6 +46,17 @@ and the project uses [Semantic Versioning](https://semver.org/).
   time when both factors are selected. Both orientations still come up; each
   fact carries equal weight. With all 14 tables selected the pool shrinks from
   154 entries to 99 facts, so a session only repeats a fact past 99 questions.
+- **The adaptive draw builds confidence gradually** (#50). `pairWeight` used
+  the pair's recency-weighted failure rate as is, so one correct answer took
+  a pair from the unpractised boost (0.25) straight to the floor, next to
+  pairs proven twenty times, and one miss sent it to the ceiling. A new
+  `drawRate` adds `UNPRACTISED_PRIOR_ATTEMPTS` (2) pseudo-attempts at
+  `UNPRACTISED_RATE`: `(weightedFailures + 0.25 × 2) / (weightedAttempts + 2)`.
+  One correct answer now rates 0.17, one miss 0.5, twenty correct 0.02. An
+  unpractised pair is the same formula with nothing observed, so the special
+  case is gone. Because the counters decay, a pair not practised for many
+  sessions also drifts back toward 0.25. Draw only: the progress screen still
+  shows `weightedErrorRate` and keeps its three-attempt threshold.
 
 ### Fixed
 - **An emptied Settings field no longer saves as the minimum** (#49). The

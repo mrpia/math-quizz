@@ -119,7 +119,10 @@ returns raw and weighted counters together. Keep the two uses apart:
 - **raw** (`attempts` / `errors` / `timeouts` / `slow`) — confidence thresholds
   and any number shown to the child;
 - **weighted** (`weightedAttempts` / `weightedFailures`, via
-  `weightedErrorRate`) — ranking, colour and the adaptive draw.
+  `weightedErrorRate`) — ranking, colour and the adaptive draw. The draw goes
+  through `drawRate` (`question.ts`), which adds a two-attempt prior at
+  `UNPRACTISED_RATE` so one answer cannot move a pair from boosted to
+  mastered (#50); the screens keep the plain rate.
 
 A failure is the credit an answer did not earn, `1 - pointsFor(record,
 session)`, under that session's own target and factor: a miss or a timeout
