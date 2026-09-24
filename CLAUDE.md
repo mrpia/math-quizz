@@ -114,10 +114,19 @@ a refusal), **settings are sanitised** (every setting has a safe default, and
 Per-pair figures come from `domain/stats.ts` → `aggregatePairs(history)`, which
 returns raw and weighted counters together. Keep the two uses apart:
 
-- **raw** (`attempts` / `errors` / `timeouts`) — confidence thresholds and any
-  number shown to the child;
+- **raw** (`attempts` / `errors` / `timeouts` / `slow`) — confidence thresholds
+  and any number shown to the child;
 - **weighted** (`weightedAttempts` / `weightedFailures`, via
-  `weightedErrorRate`) — ranking and colour.
+  `weightedErrorRate`) — ranking, colour and the adaptive draw.
+
+A failure is the credit an answer did not earn, `1 - pointsFor(record,
+session)`, under that session's own target and factor: a miss or a timeout
+counts 1, a correct answer past the target counts `1 - partialCreditFactor`
+(#47). Hesitation is what the drill works on, so a pair the results screen
+flags 🟡 must not show as mastered on the progress screen. Paper and training
+records carry a verdict, never partial credit, so slowness never counts there.
+The `slow` count is display-only: without it a pair listed for slowness alone
+would read "0 / 5".
 
 Collapsing them would either flag pairs the child has already fixed or judge a
 pair on one recent lucky answer. Decay is per *session*, never wall-clock: it

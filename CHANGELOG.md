@@ -8,6 +8,20 @@ and the project uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- **Slow correct answers now count as a weakness** (#47). `aggregatePairs`
+  only counted wrong answers, timeouts and paper ❌ marks as failures, so a
+  pair answered right in 9 s every time showed as mastered (`heat--0`), stayed
+  off "Paires à revoir" and was never boosted by the adaptive draw, while the
+  results screen flagged every one of those answers 🟡 "trop lent". A failure
+  is now the credit the answer did not earn, `1 - pointsFor(record, session)`,
+  under the session's own `durationPerQuestionMs` and `partialCreditFactor`:
+  with the default 0.5, two slow answers weigh like one miss. Ranking, the
+  heat-map colour and the draw all follow from the one weighted rate. A new
+  raw `slow` counter (on `PairCounters`, `PairStat` and `GridCell`) is shown
+  next to the count, "0 / 5 · 3 🐢", so a pair listed for slowness alone does
+  not read "0 / 5". Paper and training records are unaffected: they carry a
+  right/wrong verdict and never earn partial credit. The `progress.recencyNote`
+  caption says so in all three languages.
 - **3 × 4 and 4 × 3 are now one fact in the draw** (#41). The pool held one
   entry per selected table × multiplier, so with tables 3 and 4 both selected,
   3 × 4 and 4 × 3 each got an entry: every commutative fact was drawn twice as

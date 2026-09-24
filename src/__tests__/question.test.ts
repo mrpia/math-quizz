@@ -143,6 +143,7 @@ const counters = (overrides: Partial<PairCounters> = {}): PairCounters => ({
   attempts: 10,
   errors: 0,
   timeouts: 0,
+  slow: 0,
   weightedAttempts: 5,
   weightedFailures: 0,
   ...overrides,

@@ -73,7 +73,7 @@ export const en: Record<TranslationKey, string> = {
   'progress.viewTest': 'Test',
   'progress.viewTraining': 'Practice',
   'progress.recencyNote':
-    'Recent mistakes count more than old ones: a pair you are getting right again drops down the list quickly.',
+    'Recent mistakes count more than old ones: a pair you are getting right again drops down the list quickly. A right answer that was too slow (🐢) counts a little too.',
   'progress.trainingEmpty': 'Practice to see your pairs to review',
   'chart.aria': 'Score over recent sessions',
   'chart.last': 'last',

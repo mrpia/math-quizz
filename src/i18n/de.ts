@@ -74,7 +74,7 @@ export const de: Record<TranslationKey, string> = {
   'progress.viewTest': 'Test',
   'progress.viewTraining': 'Üben',
   'progress.recencyNote':
-    'Deine letzten Fehler zählen mehr als ältere: Ein Paar, das du wieder richtig hast, rutscht schnell nach unten.',
+    'Deine letzten Fehler zählen mehr als ältere: Ein Paar, das du wieder richtig hast, rutscht schnell nach unten. Eine richtige, aber zu langsame Antwort (🐢) zählt auch ein bisschen.',
   'progress.trainingEmpty': 'Übe, um deine Paare zum Üben zu sehen',
   'chart.aria': 'Punkte der letzten Runden',
   'chart.last': 'letzte',

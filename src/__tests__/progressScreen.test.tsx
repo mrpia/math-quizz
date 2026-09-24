@@ -1,5 +1,5 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { ProgressScreen } from '../screens/ProgressScreen';
 import { storageKeys } from '../storage/profileStore';
 import type { SessionResult } from '../domain/session';
@@ -77,6 +77,31 @@ describe('ProgressScreen', () => {
     expect(screen.queryByText('7 × 8')).not.toBeInTheDocument();
     expect(screen.getByText(/Aucune paire à revoir/)).toBeInTheDocument();
     expect(screen.getByLabelText('7×8 — 1 / 21')).toHaveClass('heat--0');
+  });
+
+  test('a pair that is only ever slow is listed, and list and tooltip show the slow count (#47)', () => {
+    const slow = { question: { a: 7, b: 8, op: 'mul' as const, expected: 56 }, given: 56, elapsedMs: 9000 };
+    const fast = { ...slow, elapsedMs: 1000 };
+    localStorage.setItem(
+      storageKeys('default').history,
+      JSON.stringify([session({ answers: [slow, slow, slow, fast, fast] })]),
+    );
+    render(<ProgressScreen {...profileProps} onBack={() => {}} />);
+    expect(screen.getByText('7 × 8')).toBeInTheDocument();
+    expect(screen.getByText('0 / 5 · 3 🐢')).toBeInTheDocument();
+    const cell = screen.getByLabelText(/^7×8 — /);
+    expect(cell).toHaveAttribute('aria-label', '7×8 — 0 / 5 · 3 🐢');
+    expect(cell).not.toHaveClass('heat--0');
+  });
+
+  test('a pair with no slow answers shows no slow count', () => {
+    localStorage.setItem(storageKeys('default').history, JSON.stringify([session()]));
+    render(<ProgressScreen {...profileProps} onBack={() => {}} />);
+    // Scoped to the list: the caption below it explains 🐢 either way.
+    const list = screen.getByTestId('trickiest-pairs');
+    expect(within(list).getByText('2 / 3')).toBeInTheDocument();
+    expect(within(list).queryByText(/🐢/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('7×8 — 2 / 3')).toBeInTheDocument();
   });
 
   test('back button calls onBack', () => {
