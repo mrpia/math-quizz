@@ -24,8 +24,9 @@ const fisherYates = <T>(items: T[]): T[] => {
 
 /**
  * α in `weight = 1 + α × drawRate`. At 2, a pair missed every time
- * recently is three times as likely to come up as one the child has mastered;
- * at 5, six times. Stored settings name the level, not the number, so the
+ * recently tends to three times as likely to come up as one the child has
+ * mastered; at 5, six times. Short histories sit closer together, since the
+ * prior pulls both toward `UNPRACTISED_RATE`. Stored settings name the level, not the number, so the
  * curve can be retuned without touching anyone's saved data.
  */
 export const ADAPTIVE_ALPHA: Record<AdaptiveDraw, number> = {
