@@ -34,6 +34,11 @@ export type GridCell = {
   slow: number;
   /** Recency-weighted failure share, or null when never practised. */
   errorRate: number | null;
+  /**
+   * Enough raw attempts to judge (`CONFIDENT_MIN_ATTEMPTS`). Below it the cell
+   * is neither green nor red, the way the review list leaves the pair out.
+   */
+  confident: boolean;
 };
 
 export type TrickiestOpts = { minAttempts?: number; limit?: number };
@@ -46,6 +51,13 @@ export type TrickiestOpts = { minAttempts?: number; limit?: number };
  * painted as fine.
  */
 export const REVIEW_MIN_RATE = 0.08;
+
+/**
+ * Raw attempts before a pair is judged at all: listed for review, painted on
+ * the heat-map, or counted toward a table's ⭐. One number for all three, so
+ * a single lucky answer can neither colour a cell green nor complete a table.
+ */
+export const CONFIDENT_MIN_ATTEMPTS = 3;
 
 export const isCorrect = (record: AnswerRecord): boolean => {
   if (record.selfMarkedCorrect !== undefined) return record.selfMarkedCorrect;
@@ -80,7 +92,7 @@ export const trickiestPairs = (
   history: SessionResult[],
   opts: TrickiestOpts = {},
 ): PairStat[] => {
-  const { minAttempts = 3, limit = 8 } = opts;
+  const { minAttempts = CONFIDENT_MIN_ATTEMPTS, limit = 8 } = opts;
   return Object.entries(aggregatePairs(history))
     .map(([key, counters]) => {
       const [a, b] = key.split('x').map(Number);
@@ -111,7 +123,7 @@ export const errorGrid = (history: SessionResult[]): GridCell[][] => {
     MULTIPLIERS.map((b) => {
       const counters = stats[canonicalKey(a, b)];
       if (!counters || counters.attempts === 0) {
-        return { a, b, attempts: 0, failures: 0, slow: 0, errorRate: null };
+        return { a, b, attempts: 0, failures: 0, slow: 0, errorRate: null, confident: false };
       }
       return {
         a,
@@ -120,7 +132,24 @@ export const errorGrid = (history: SessionResult[]): GridCell[][] => {
         failures: counters.errors + counters.timeouts,
         slow: counters.slow,
         errorRate: weightedErrorRate(counters),
+        confident: counters.attempts >= CONFIDENT_MIN_ATTEMPTS,
       };
     }),
   );
 };
+
+/**
+ * The tables (heat-map rows, the same numbers the child ticks in Settings)
+ * whose every pair is confidently below `REVIEW_MIN_RATE` — the ⭐ rows.
+ * Derived on render like everything else here: a star goes away only when a
+ * new miss or slow answer lifts a pair back over the line, never with time,
+ * since decay scales a clean pair's failures and attempts alike.
+ */
+export const completeTables = (grid: GridCell[][]): number[] =>
+  grid
+    .filter((row) =>
+      row.every(
+        (cell) => cell.confident && cell.errorRate !== null && cell.errorRate < REVIEW_MIN_RATE,
+      ),
+    )
+    .map((row) => row[0].a);

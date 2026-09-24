@@ -7,7 +7,31 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **⭐ for a completed table on the heat-map** (#59). A row header gets a star
+  when every pair in that table has at least `CONFIDENT_MIN_ATTEMPTS` (3) raw
+  attempts and a weighted rate below `REVIEW_MIN_RATE`. Rows are
+  `MULTIPLICANDS`, the tables the child ticks in Settings. `completeTables`
+  (`progress.ts`) derives it from `errorGrid` on render; nothing is stored.
+  Each view (Test / Entraînement) computes stars from its own history. A star
+  goes away only after a new miss or slow answer: decay scales a clean pair's
+  failures and attempts alike, so time alone cannot remove it. No hysteresis.
+
 ### Changed
+- **Heat-map cells need three attempts before they get a colour** (#59).
+  `errorGrid` only checked `attempts === 0`, while "Paires à revoir" needs
+  three, so one lucky answer painted a cell green and one slip painted it red
+  without listing it. The threshold is now one constant,
+  `CONFIDENT_MIN_ATTEMPTS`, shared by `trickiestPairs`, the new
+  `GridCell.confident` and the star. Cells below it render as `heat--unsure`
+  (neutral, dashed outline) through `cellBucket` (`rateColor.ts`). Expect the
+  map to look less green right after the update; the release note should say
+  so, so it does not read as lost progress.
+- **Heat-map legend says what the colours mean** (#59): got it / to review
+  (yellow-orange-red scale) / not sure yet / not played, replacing "rare /
+  frequent", which named no noun and left yellow and orange out. Keys
+  `heatmap.rare` and `heatmap.frequent` are replaced by `heatmap.mastered`,
+  `heatmap.review`, `heatmap.unsure` and `heatmap.tableComplete`.
 - **Paper tests are no longer recorded** (#44). The paper results screen
   started with every row marked ✅ and 💾 enabled, so tapping Save without
   comparing recorded a perfect session; and even an honest mark was made

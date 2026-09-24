@@ -167,3 +167,56 @@ describe('ProgressScreen — training view', () => {
     expect(screen.getByText(/Entraîne-toi pour voir/i)).toBeInTheDocument();
   });
 });
+
+/** Every pair of table `a`, three fast correct answers each: a complete table. */
+const completeTable = (a: number, over: Partial<SessionResult> = {}): SessionResult =>
+  session({
+    answers: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].flatMap((b) =>
+      Array.from({ length: 3 }, () => ({
+        question: { a, b, op: 'mul' as const, expected: a * b },
+        given: a * b,
+        elapsedMs: 1000,
+      })),
+    ),
+    ...over,
+  });
+
+describe('ProgressScreen — heat-map mastery (#59)', () => {
+  test('a completed table gets a ⭐ in its row header, others do not', () => {
+    localStorage.setItem(storageKeys('default').history, JSON.stringify([completeTable(7)]));
+    render(<ProgressScreen {...profileProps} onBack={() => {}} />);
+    expect(screen.getByRole('img', { name: 'Table de 7 complète' })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Table de 8 complète' })).toBeNull();
+  });
+
+  test('stars follow the view: a table completed in training shows only there', () => {
+    localStorage.setItem(storageKeys('default').history, JSON.stringify([session()]));
+    localStorage.setItem(
+      storageKeys('default').trainingHistory,
+      JSON.stringify([completeTable(6, { answerMode: 'training' })]),
+    );
+    render(<ProgressScreen {...profileProps} onBack={() => {}} />);
+    expect(screen.queryByRole('img', { name: 'Table de 6 complète' })).toBeNull();
+    fireEvent.click(screen.getByRole('radio', { name: 'Entraînement' }));
+    expect(screen.getByRole('img', { name: 'Table de 6 complète' })).toBeInTheDocument();
+  });
+
+  test('a pair played once is "not sure yet", not green', () => {
+    const once = session({
+      answers: [{ question: { a: 7, b: 8, op: 'mul', expected: 56 }, given: 56, elapsedMs: 1000 }],
+    });
+    localStorage.setItem(storageKeys('default').history, JSON.stringify([once]));
+    render(<ProgressScreen {...profileProps} onBack={() => {}} />);
+    const cell = screen.getByLabelText('7×8 — 0 / 1');
+    expect(cell).toHaveClass('heat--unsure');
+    expect(cell).not.toHaveClass('heat--0');
+  });
+
+  test('the legend says what each colour means for the child', () => {
+    localStorage.setItem(storageKeys('default').history, JSON.stringify([session()]));
+    render(<ProgressScreen {...profileProps} onBack={() => {}} />);
+    for (const label of ['tu sais', 'à revoir', 'à confirmer', 'pas joué']) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
+  });
+});

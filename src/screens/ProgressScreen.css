@@ -186,10 +186,17 @@
   border: 2px solid var(--color-card-bg);
   border-radius: 4px;
 }
+.heatmap__rowhead {
+  white-space: nowrap;
+}
+.heatmap__star {
+  margin-right: 2px;
+}
 .heatmap__legend {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.4rem 0.8rem;
   margin-top: 0.6rem;
   font-size: 0.75rem;
   color: var(--color-fg-muted);
@@ -199,6 +206,16 @@
   height: 14px;
   border-radius: 3px;
   display: inline-block;
+}
+.heatmap__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+.heatmap__legend-scale {
+  display: inline-flex;
+  gap: 1px;
 }
 
 /* shared error-rate buckets (light) */
@@ -216,6 +233,16 @@
 }
 .heat--nodata {
   background: var(--color-chip-bg);
+}
+/* Played, but under CONFIDENT_MIN_ATTEMPTS: no colour yet, and a dashed
+   outline so it reads apart from "not played" without relying on hue. */
+.heat--unsure {
+  background: var(--color-chip-bg);
+  outline: 1.5px dashed var(--color-fg-muted);
+  outline-offset: -4px;
+}
+.heatmap__legend .heat--unsure {
+  outline-offset: -1.5px;
 }
 
 @media (prefers-color-scheme: dark) {
