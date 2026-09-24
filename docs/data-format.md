@@ -105,10 +105,22 @@ same stored pair backs both directions.
 **Error keys are canonical.** `errors` is keyed `"<low>x<high>"` with the
 operands sorted ascending, so 7×8, 8×7 and 56÷7 all accumulate under `"7x8"`.
 
-**Paper mode has no `given`.** When answers are written on paper the app never
-sees them: `given` is `null` and `selfMarkedCorrect` records what the child
-ticked on the results screen. When present, that flag overrides the
-`given`/`expected` comparison for both scoring and statistics.
+**`selfMarkedCorrect`, when present, is the verdict.** It overrides the
+`given`/`expected` comparison for both scoring and statistics. Two modes write
+it:
+
+- **paper**: the app never sees the written answer, so `given` is `null` and
+  the flag is what the child ticked on the results screen;
+- **training**: `given` is the number typed, and the flag is the app's own check,
+  stored at answer time.
+
+Screen records leave it out and are judged on `given === expected`.
+
+**A `null` `given` outside paper mode is legacy data.** Older versions cut a
+screen question off when time ran out and stored `given: null`. No current mode
+does that: a screen question waits for an answer however long it takes. Exports
+may still carry such records from old histories, and the app still counts them
+as timeouts.
 
 ## How the importer treats a file
 
@@ -147,7 +159,7 @@ tooling works. A few examples:
 
 ```bash
 # Score of every recorded test, as a ratio.
-# selfMarkedCorrect wins when present — in paper mode `given` is always null.
+# selfMarkedCorrect wins when present (paper and training records carry it).
 jq '.data.history[] | {
       at: .startedAt,
       correct: ([.answers[] | select(
@@ -157,11 +169,27 @@ jq '.data.history[] | {
       total: (.answers | length)
     }' math-quizz-backup-2026-09-05.json
 
-# The ten shakiest pairs by error rate
-jq -r '.data.errors | to_entries
-       | map(select(.value.attempts >= 3))
-       | sort_by((.value.errors + .value.timeouts) / .value.attempts) | reverse
-       | .[:10][] | "\(.key)\t\((.value.errors + .value.timeouts) / .value.attempts)"' \
+# The ten shakiest pairs, as "Paires à revoir" ranks them: filed under the
+# canonical key, ranked by the recency-weighted failure share, shown with raw
+# counts. Pairs seen fewer than 3 times are left out, as in the app.
+jq -r '.data.history
+  | length as $n
+  | [ to_entries[]
+      | pow(0.5; ($n - 1 - .key) / 10) as $w
+      | .value.answers[]
+      | { key: ([.question.a, .question.b] | sort | "\(.[0])x\(.[1])"),
+          w: $w,
+          failed: (if has("selfMarkedCorrect") then .selfMarkedCorrect | not
+                   else .given != .question.expected end) } ]
+  | group_by(.key)
+  | map({ key: .[0].key,
+          attempts: length,
+          failures: (map(select(.failed)) | length),
+          rate: ((map(select(.failed) | .w) | add // 0) / (map(.w) | add)) })
+  | map(select(.attempts >= 3 and .rate > 0))
+  | sort_by(-.rate)
+  | .[:10][]
+  | "\(.key)\t\(.failures) / \(.attempts)\t\(.rate * 100 | round)%"' \
    math-quizz-backup-2026-09-05.json
 ```
 

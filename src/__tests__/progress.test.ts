@@ -212,11 +212,19 @@ describe('errorGrid', () => {
     expect(grid[r8][c7].errorRate).toBeCloseTo(2 / 3);
   });
 
+  test('carries the raw failure count next to the weighted rate', () => {
+    const grid = errorGrid(history);
+    const cell = grid[MULTIPLICANDS.indexOf(7)][MULTIPLIERS.indexOf(8)];
+    expect(cell.attempts).toBe(3);
+    expect(cell.failures).toBe(2);
+  });
+
   test('never-practised cell has null errorRate', () => {
     const grid = errorGrid(history);
     const r15 = MULTIPLICANDS.indexOf(15);
     const c11 = MULTIPLIERS.indexOf(11);
     expect(grid[r15][c11].errorRate).toBeNull();
     expect(grid[r15][c11].attempts).toBe(0);
+    expect(grid[r15][c11].failures).toBe(0);
   });
 });

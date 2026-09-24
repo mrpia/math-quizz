@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { LanguageProvider } from '../i18n/I18nContext';
 import { HomeScreen } from '../screens/HomeScreen';
 import { DEFAULT_SETTINGS } from '../domain/session';
 import type { ProfileEntry } from '../storage/profileRegistry';
@@ -174,5 +175,54 @@ describe('HomeScreen — language selector', () => {
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ language: 'de' }),
     );
+  });
+});
+
+describe('HomeScreen — summary pluralisation', () => {
+  const renderWith = (answerMode: 'screen' | 'training' | 'list', lang: 'fr' | 'de' | 'en') =>
+    render(
+      <LanguageProvider lang={lang}>
+        <HomeScreen
+          {...profileProps}
+          settings={{ ...DEFAULT_SETTINGS, questionCount: 1, answerMode, language: lang }}
+          onChange={noop}
+          onStart={noop}
+          onOpenSettings={noop}
+          onOpenProgress={noop}
+          onOpenInfo={noop}
+        />
+      </LanguageProvider>,
+    );
+
+  test.each([
+    ['screen', 'fr', /^1 question ·/],
+    ['training', 'fr', /^1 question ·/],
+    ['list', 'fr', /^1 opération à réviser$/],
+    ['screen', 'de', /^1 Frage ·/],
+    ['training', 'de', /^1 Frage ·/],
+    ['list', 'de', /^1 Aufgabe zum Üben$/],
+    ['screen', 'en', /^1 question ·/],
+    ['training', 'en', /^1 question ·/],
+    ['list', 'en', /^1 operation to review$/],
+  ] as const)('one question in %s mode reads in the singular (%s)', (mode, lang, expected) => {
+    renderWith(mode, lang);
+    expect(screen.getByText(expected)).toBeInTheDocument();
+  });
+
+  test('more than one keeps the plural', () => {
+    renderWith('screen', 'en');
+    cleanup();
+    render(
+      <HomeScreen
+        {...profileProps}
+        settings={{ ...DEFAULT_SETTINGS, questionCount: 2 }}
+        onChange={noop}
+        onStart={noop}
+        onOpenSettings={noop}
+        onOpenProgress={noop}
+        onOpenInfo={noop}
+      />,
+    );
+    expect(screen.getByText(/^2 questions ·/)).toBeInTheDocument();
   });
 });

@@ -26,6 +26,8 @@ export type GridCell = {
   b: number;
   /** Raw attempts; 0 means the pair has never come up. */
   attempts: number;
+  /** Raw errors + timeouts — the number the tooltip shows, as in the list. */
+  failures: number;
   /** Recency-weighted failure share, or null when never practised. */
   errorRate: number | null;
 };
@@ -94,12 +96,13 @@ export const errorGrid = (history: SessionResult[]): GridCell[][] => {
     MULTIPLIERS.map((b) => {
       const counters = stats[canonicalKey(a, b)];
       if (!counters || counters.attempts === 0) {
-        return { a, b, attempts: 0, errorRate: null };
+        return { a, b, attempts: 0, failures: 0, errorRate: null };
       }
       return {
         a,
         b,
         attempts: counters.attempts,
+        failures: counters.errors + counters.timeouts,
         errorRate: weightedErrorRate(counters),
       };
     }),

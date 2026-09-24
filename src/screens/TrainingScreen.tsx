@@ -7,6 +7,7 @@ import { NumPad } from '../components/NumPad';
 import { QuestionCard } from '../components/QuestionCard';
 import { CancelButton } from '../components/CancelButton';
 import { useNumericKeyboard } from '../hooks/useNumericKeyboard';
+import { appendDigit } from '../domain/answerInput';
 import { useI18n } from '../i18n/I18nContext';
 import './TrainingScreen.css';
 
@@ -82,7 +83,7 @@ export const TrainingScreen = ({ profileId, settings, onComplete, onCancel }: Pr
 
   const handleDigit = (d: number) => {
     if (phase !== 'answering') return;
-    setGiven((prev) => (prev.length >= 4 ? prev : prev + String(d)));
+    setGiven((prev) => appendDigit(prev, d));
   };
   const handleErase = () => {
     if (phase !== 'answering') return;

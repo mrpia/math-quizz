@@ -24,6 +24,7 @@ const renderOperation = (record: AnswerRecord): string => {
 };
 
 const classify = (record: AnswerRecord, targetMs: number): Kind => {
+  // Legacy only: no current mode stores a screen answer without a value.
   if (record.given === null) return 'timeout';
   if (record.given !== record.question.expected) return 'wrong';
   return record.elapsedMs <= targetMs ? 'ok' : 'slow';

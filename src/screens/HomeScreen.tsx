@@ -34,6 +34,7 @@ export const HomeScreen = ({
 }: Props) => {
   const { t } = useI18n();
   const seconds = formatSeconds(settings.durationPerQuestionMs);
+  const one = settings.questionCount === 1;
   const canStart = settings.selectedTables.length > 0;
   const isTraining = (settings.answerMode ?? 'screen') === 'training';
   const isList = (settings.answerMode ?? 'screen') === 'list';
@@ -103,10 +104,10 @@ export const HomeScreen = ({
       </section>
       <p className="home__info">
         {isList
-          ? t('home.summaryList', { count: settings.questionCount })
+          ? t(one ? 'home.summaryListOne' : 'home.summaryList', { count: settings.questionCount })
           : isTraining
-            ? t('home.summaryTraining', { count: settings.questionCount })
-            : t('home.summary', { count: settings.questionCount, seconds })}
+            ? t(one ? 'home.summaryTrainingOne' : 'home.summaryTraining', { count: settings.questionCount })
+            : t(one ? 'home.summaryOne' : 'home.summary', { count: settings.questionCount, seconds })}
       </p>
       {!canStart && (
         <p className="home__hint" role="status">

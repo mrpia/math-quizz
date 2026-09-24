@@ -144,7 +144,7 @@
           "enum": ["mul", "div", "mix"]
         },
         "answerMode": {
-          "description": "How the answers were collected. Absent on sessions recorded before the field existed — read an absent value as 'screen'. Never 'list', which records no session.",
+          "description": "How the answers were collected. Screen sessions recorded by versions up to 1.1.0 omit it, as does anything older than the field — read an absent value as 'screen'. Never 'list', which records no session.",
           "enum": ["screen", "paper", "training"]
         },
         "answers": {
@@ -160,7 +160,7 @@
       "properties": {
         "question": { "$ref": "#/$defs/question" },
         "given": {
-          "description": "What the child answered, or null if time ran out with no answer.",
+          "description": "What the child typed. null in paper records, where the app never sees the written answer. Histories written by older versions can also hold null in screen records, meaning time ran out with no answer; no current mode produces that, but readers should still count such a record as a timeout.",
           "type": ["number", "null"]
         },
         "elapsedMs": {
@@ -168,7 +168,7 @@
           "type": "number"
         },
         "selfMarkedCorrect": {
-          "description": "Paper mode only: whether the child marked their handwritten answer right when comparing against the screen. When present it overrides the given/expected comparison — on paper the app never sees what was written, so `given` is null.",
+          "description": "Whether the answer counts as right, when present. It overrides the given/expected comparison for scoring and statistics. Paper records: the child's own mark on the results screen, with `given` null because the app never sees what was written. Training records: the app's own check, stored next to the numeric `given` it was computed from. Screen records omit it.",
           "type": "boolean"
         }
       }

@@ -56,6 +56,8 @@ const classify = (record: AnswerRecord): Outcome => {
   if (record.selfMarkedCorrect !== undefined) {
     return record.selfMarkedCorrect ? 'correct' : 'error';
   }
+  // Legacy only: screen questions no longer time out, but old histories
+  // still carry `given: null` records and must keep counting them.
   if (record.given === null) return 'timeout';
   if (record.given !== record.question.expected) return 'error';
   return 'correct';
