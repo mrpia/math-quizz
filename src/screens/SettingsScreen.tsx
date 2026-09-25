@@ -7,7 +7,6 @@ import {
   backupFileName,
   parseBackup,
   serializeBackup,
-  summarizeBackup,
 } from '../domain/backup';
 import type { Backup, BackupProblem } from '../domain/backup';
 import { downloadTextFile, readTextFile } from '../storage/fileTransfer';
@@ -16,10 +15,9 @@ import type { TranslationKey } from '../i18n/types';
 import { LanguageToggle } from '../components/LanguageToggle';
 import { AdaptiveDrawToggle } from '../components/AdaptiveDrawToggle';
 import { ProfileManager } from '../components/ProfileManager';
-import { ImportModeToggle } from '../components/ImportModeToggle';
+import { ImportDialog } from '../components/ImportDialog';
 import type { ImportMode, MergeCounts } from '../domain/merge';
-import { HISTORY_LIMIT } from '../storage/profileStore';
-import { findProfile, profileLabel } from '../storage/profileRegistry';
+import { findProfile } from '../storage/profileRegistry';
 import type { ProfileRegistry } from '../storage/profileRegistry';
 import './SettingsScreen.css';
 
@@ -81,18 +79,11 @@ export const SettingsScreen = ({
   const [partial, setPartial] = useState(String(settings.partialCreditFactor));
   const [confirming, setConfirming] = useState(false);
   const [pendingImport, setPendingImport] = useState<Backup | null>(null);
-  // Where a picked file will land. Defaults to the profile in use; the picker
-  // below only appears once there is somewhere else it could go.
-  const [importTarget, setImportTarget] = useState(registry.active);
-  // Replace is the default: it is what import has always done, and a merge
-  // is a choice the dialog asks for rather than a behaviour it slips in (#18).
-  const [importMode, setImportMode] = useState<ImportMode>('replace');
+  // Counts picked files. It keys the import dialog, so a new file mounts a
+  // fresh one: back on the profile in use, back on Replace.
+  const [pick, setPick] = useState(0);
   const [notice, setNotice] = useState<Notice | null>(null);
   const { t } = useI18n();
-
-  const unnamed = t('profiles.unnamed');
-  const nameOf = (profileId: string) =>
-    profileLabel(findProfile(registry, profileId), unnamed);
 
   const [formatBefore, formatAfter] = t('settings.formatDoc').split('{link}');
 
@@ -150,17 +141,16 @@ export const SettingsScreen = ({
       setNotice({ kind: 'error', key: IMPORT_ERRORS[result.problem] });
       return;
     }
-    // Valid, but nothing is written until the confirmation below.
+    // Valid, but nothing is written until the dialog confirms.
     setNotice(null);
-    setImportTarget(registry.active);
-    setImportMode('replace');
+    setPick((n) => n + 1);
     setPendingImport(result.backup);
   };
 
-  const confirmImport = () => {
+  const confirmImport = (target: string, mode: ImportMode) => {
     if (!pendingImport) return;
     try {
-      onImport(importTarget, pendingImport, importMode);
+      onImport(target, pendingImport, mode);
     } catch {
       setPendingImport(null);
       setNotice({ kind: 'error', key: 'settings.importErrorStorage' });
@@ -172,7 +162,7 @@ export const SettingsScreen = ({
     // back over what was just imported. Only when the file landed in the
     // profile being edited, though — importing into another one must leave
     // this form exactly as it was. A merge brings no settings, so it never does.
-    if (importMode === 'replace' && importTarget === registry.active) {
+    if (mode === 'replace' && target === registry.active) {
       const imported = pendingImport.data.settings;
       setSeconds(String(imported.durationPerQuestionMs / 1000));
       setCount(String(imported.questionCount));
@@ -181,17 +171,9 @@ export const SettingsScreen = ({
     setPendingImport(null);
     setNotice({
       kind: 'info',
-      key: importMode === 'merge' ? 'settings.mergeDone' : 'settings.importDone',
+      key: mode === 'merge' ? 'settings.mergeDone' : 'settings.importDone',
     });
   };
-
-  const summary = pendingImport ? summarizeBackup(pendingImport) : null;
-  // Recomputed on every render, so it follows the destination picker. Cheap:
-  // two histories of at most HISTORY_LIMIT sessions each.
-  const mergeCounts =
-    pendingImport && importMode === 'merge'
-      ? onPreviewMerge(importTarget, pendingImport)
-      : null;
 
   return (
     <div className="settings">
@@ -321,83 +303,15 @@ export const SettingsScreen = ({
           </p>
         )}
 
-        {pendingImport && summary && (
-          <div className="settings__confirm">
-            <p>{t('settings.importConfirm')}</p>
-            <p className="settings__hint">
-              {t('settings.importSummary', {
-                sessions: summary.sessions,
-                training: summary.trainingSessions,
-                pairs: summary.pairs,
-              })}
-            </p>
-            {pendingImport.profileName !== '' && (
-              <p className="settings__hint">
-                {t('settings.importSource', { name: pendingImport.profileName })}
-              </p>
-            )}
-            {registry.profiles.length > 1 && (
-              <label className="settings__field">
-                <span className="settings__label">{t('settings.importTarget')}</span>
-                <select
-                  value={importTarget}
-                  onChange={(event) => setImportTarget(event.target.value)}
-                >
-                  {registry.profiles.map((profile) => (
-                    <option key={profile.id} value={profile.id}>
-                      {profileLabel(profile, unnamed)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            <div className="settings__field">
-              <span className="settings__label">{t('settings.importMode')}</span>
-              <ImportModeToggle value={importMode} onChange={setImportMode} />
-            </div>
-            {mergeCounts ? (
-              <>
-                <p className="settings__hint">
-                  {t('settings.importMergeWarning', { name: nameOf(importTarget) })}
-                </p>
-                <p className="settings__hint">
-                  {t('settings.importMergeSummary', {
-                    added: mergeCounts.added,
-                    known: mergeCounts.known,
-                  })}
-                </p>
-                {mergeCounts.dropped > 0 && (
-                  <p className="settings__hint">
-                    {t('settings.importMergeDropped', {
-                      limit: HISTORY_LIMIT,
-                      dropped: mergeCounts.dropped,
-                    })}
-                  </p>
-                )}
-              </>
-            ) : (
-              <p className="settings__hint">
-                {t('settings.importWarning', { name: nameOf(importTarget) })}
-              </p>
-            )}
-            <div className="settings__confirm-row">
-              <button
-                type="button"
-                className="settings__danger"
-                data-testid="import-confirm"
-                onClick={confirmImport}
-              >
-                {t('settings.importYes')}
-              </button>
-              <button
-                type="button"
-                className="settings__secondary"
-                onClick={() => setPendingImport(null)}
-              >
-                {t('settings.cancel')}
-              </button>
-            </div>
-          </div>
+        {pendingImport && (
+          <ImportDialog
+            key={pick}
+            backup={pendingImport}
+            registry={registry}
+            onPreviewMerge={onPreviewMerge}
+            onConfirm={confirmImport}
+            onCancel={() => setPendingImport(null)}
+          />
         )}
 
         <p className="settings__hint">
