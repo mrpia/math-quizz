@@ -127,12 +127,12 @@
   list-style: none;
   padding: 0;
   margin: 0;
-  /* One grid for the whole list, rows as `display: contents`: the count
-     column is as wide as the widest count, so every bar track is the same
-     width. Bars are percentages of their track, and two pairs with the same
-     rate must be the same length whatever their count says. */
+  /* One grid for the whole list, rows as `display: contents`: the label and
+     count columns are as wide as their widest entry, so every bar track is
+     the same width. Bars are percentages of their track, and two pairs with
+     the same rate must be the same length whatever their count says. */
   display: grid;
-  grid-template-columns: 4rem 1fr auto;
+  grid-template-columns: auto 1fr auto;
   column-gap: 0.6rem;
   row-gap: 0.4rem;
   align-items: center;
@@ -146,6 +146,8 @@
   display: contents;
 }
 .pairs__pair {
+  /* "12 × 12" sizes the column; it never breaks after the ×. */
+  white-space: nowrap;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }

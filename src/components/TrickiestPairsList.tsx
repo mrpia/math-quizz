@@ -19,7 +19,7 @@ export const TrickiestPairsList = ({ pairs }: Props) => {
     <ul className="pairs" data-testid="trickiest-pairs">
       {pairs.map((p) => (
         <li className="pairs__row" key={`${p.a}x${p.b}`}>
-          <span className="pairs__pair">
+          <span className="pairs__pair" data-testid="pair-label">
             {p.a} × {p.b}
           </span>
           <span className="pairs__barwrap">
