@@ -7,6 +7,8 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-09-25
+
 ### Fixed
 - **A wrong answer on the Bilan no longer looks like a wrong equation.** The ❌
   sat beside the bold right equation (`7 × 8 = 56`), and the child's answer
