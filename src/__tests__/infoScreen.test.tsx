@@ -15,9 +15,7 @@ describe('InfoScreen', () => {
     render(<InfoScreen version="9.9.9" onBack={() => {}} />);
     const latest = releaseNotes[0];
     expect(screen.getByText(latest.changes.fr[0])).toBeInTheDocument();
-    expect(
-      screen.getAllByText(new RegExp(latest.version.replace(/\./g, '\\.'))).length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(latest.version, { exact: false }).length).toBeGreaterThan(0);
   });
 
   test('explains where the user data is stored', () => {
