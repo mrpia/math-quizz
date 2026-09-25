@@ -4,7 +4,6 @@ import {
   loadSettings,
   saveSettings,
   loadHistory,
-  appendSession,
   recordSession,
   loadTrainingHistory,
   recordTrainingSession,
@@ -34,6 +33,13 @@ const mkSession = (offsetMinutes: number): SessionResult => ({
     },
   ],
 });
+
+/**
+ * Puts sessions in storage the way an older version left them: as they are,
+ * with no id stamped. The store itself has no such write any more.
+ */
+const seedHistory = (profileId: string, sessions: SessionResult[]) =>
+  localStorage.setItem(storageKeys(profileId).history, JSON.stringify(sessions));
 
 beforeEach(() => localStorage.clear());
 afterEach(() => localStorage.clear());
@@ -108,15 +114,15 @@ describe('history', () => {
     expect(loadHistory('default')).toEqual([]);
   });
 
-  test('appendSession pushes and persists', () => {
+  test('recordSession pushes and persists', () => {
     const s = mkSession(1);
-    appendSession('default', s);
-    expect(loadHistory('default')).toEqual([s]);
+    recordSession('default', s);
+    expect(loadHistory('default')).toMatchObject([s]);
   });
 
   test('history is capped at HISTORY_LIMIT (oldest dropped)', () => {
     for (let i = 0; i < HISTORY_LIMIT + 5; i++) {
-      appendSession('default', mkSession(i));
+      recordSession('default', mkSession(i));
     }
     const hist = loadHistory('default');
     expect(hist).toHaveLength(HISTORY_LIMIT);
@@ -167,7 +173,7 @@ describe('the abandoned lifetime error counters', () => {
 describe('clearAll', () => {
   test('clears history and errors but preserves settings', () => {
     saveSettings('default', { ...DEFAULT_SETTINGS, questionCount: 11 });
-    appendSession('default', mkSession(1));
+    recordSession('default', mkSession(1));
     clearAll('default');
     expect(loadHistory('default')).toEqual([]);
     expect(loadSettings('default').questionCount).toBe(11);
@@ -428,9 +434,15 @@ describe('session ids (#18)', () => {
     expect(loadHistory('default')[0].id).toBe('given');
   });
 
+  it('stamps a fresh id even when the caller passes id: undefined by hand', () => {
+    // The id is spread last: an explicit undefined must not win over it.
+    recordSession('default', { ...mkSession(1), id: undefined });
+    expect(loadHistory('default')[0].id).toMatch(/^[0-9a-f]{32}$/);
+  });
+
   it('never backfills an id on a session stored without one', () => {
     // Same old session on two devices, two random ids: they would stop matching.
-    appendSession('default', mkSession(1));
+    seedHistory('default', [mkSession(1)]);
     recordSession('default', mkSession(2));
     expect(loadHistory('default')[0]).not.toHaveProperty('id');
   });
@@ -465,7 +477,7 @@ describe('importProfile — merge (#18)', () => {
   });
 
   it('matches sessions without ids on startedAt and answer count', () => {
-    appendSession('default', mkSession(1));
+    seedHistory('default', [mkSession(1)]);
     importProfile('default', fileWith([mkSession(1), mkSession(2)]), 'merge');
     expect(loadHistory('default')).toEqual([mkSession(1), mkSession(2)]);
   });
@@ -487,7 +499,7 @@ describe('importProfile — merge (#18)', () => {
   });
 
   it('keeps the newest HISTORY_LIMIT sessions overall', () => {
-    for (let i = 0; i < HISTORY_LIMIT; i++) appendSession('default', mkSession(i * 2));
+    seedHistory('default', Array.from({ length: HISTORY_LIMIT }, (_, i) => mkSession(i * 2)));
     const newer = Array.from({ length: 10 }, (_, i) => mkSession(i * 2 + 1 + 80));
 
     importProfile('default', fileWith(newer), 'merge');
@@ -513,7 +525,7 @@ describe('importProfile — merge (#18)', () => {
 
 describe('previewMerge', () => {
   it('counts, before anything is written, what a merge would do', () => {
-    for (let i = 0; i < HISTORY_LIMIT; i++) appendSession('default', mkSession(i));
+    seedHistory('default', Array.from({ length: HISTORY_LIMIT }, (_, i) => mkSession(i)));
     const backup = exportProfile('default', '1.2.0');
     backup.data.history = [mkSession(0), mkSession(200), mkSession(201)];
     backup.data.trainingHistory = [{ ...mkSession(3), answerMode: 'training' }];

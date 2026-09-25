@@ -19,17 +19,18 @@ export const TrickiestPairsList = ({ pairs }: Props) => {
     <ul className="pairs" data-testid="trickiest-pairs">
       {pairs.map((p) => (
         <li className="pairs__row" key={`${p.a}x${p.b}`}>
-          <span className="pairs__pair">
+          <span className="pairs__pair" data-testid="pair-label">
             {p.a} × {p.b}
           </span>
           <span className="pairs__barwrap">
             <span
               className={`pairs__bar heat--${rateBucket(p.errorRate)}`}
+              data-testid="pair-bar"
               style={{ width: `${Math.round((p.errorRate / maxRate) * 100)}%` }}
             />
           </span>
-          <span className="pairs__num">
-            {formatPairCount(p.errors + p.timeouts, p.attempts, p.slow)}
+          <span className="pairs__num" data-testid="pair-count">
+            {formatPairCount(p.failures, p.attempts, p.slow)}
           </span>
         </li>
       ))}

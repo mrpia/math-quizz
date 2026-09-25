@@ -264,6 +264,24 @@ describe('SettingsScreen — choosing where an import lands', () => {
     ).toBeInTheDocument();
   });
 
+  it('a new file starts again on the profile in use, whatever the last pick was', async () => {
+    // The dialog is keyed per picked file, so the destination cannot carry
+    // over from one file to the next. Pinned here; the mode has its own test.
+    renderScreen({ registry: TWO });
+    uploadJson(serializeBackup(backup));
+    const select = await screen.findByLabelText(/importer dans le profil/i);
+    fireEvent.change(select, { target: { value: 'p2' } });
+    expect(select).toHaveValue('p2');
+
+    uploadJson(serializeBackup(backup));
+    await waitFor(() =>
+      expect(screen.getByLabelText(/importer dans le profil/i)).toHaveValue('default'),
+    );
+    expect(
+      screen.getByText(/Les réglages et les résultats de « Léa » seront remplacés/),
+    ).toBeInTheDocument();
+  });
+
   it('says whose file this is when it carries a name', async () => {
     const fromTom = createBackup(backup.data, {
       appVersion: '0.12.0',

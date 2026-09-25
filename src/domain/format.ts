@@ -27,6 +27,8 @@ export const formatPoints = (n: number): string => Number(n.toFixed(2)).toString
  * for 4.04 s, an answer scored slow (#48). The step is a tenth when the target
  * sits on that grid (every 0.5-step value does) and a hundredth otherwise, so
  * a 2.25 s target does not read "2.3" while the answer still counts as fast.
+ * Relies on targets being stored on the `TARGET_STEP_MS` grid: off it, a
+ * hundredth could still round past a target the answer had not passed.
  */
 export const formatElapsed = (ms: number, targetMs: number): string => {
   const stepMs = targetMs % 100 === 0 ? 100 : 10;

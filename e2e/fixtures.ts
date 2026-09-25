@@ -75,7 +75,8 @@ export const storedSettings = (page: Page, id: string): Promise<Settings> =>
 
 /**
  * A recorded session over one multiplication pair, `wrong` of its attempts
- * answered incorrectly.
+ * answered incorrectly and `slow` of the rest answered right but past the 4 s
+ * target (a partial failure, #47).
  *
  * `trickiestPairs` only surfaces a pair with at least three raw attempts and a
  * weighted failure rate of at least `REVIEW_MIN_RATE` (0.08), so a fixture
@@ -85,7 +86,7 @@ export const storedSettings = (page: Page, id: string): Promise<Settings> =>
 export const sessionOverPair = (
   a: number,
   b: number,
-  { attempts = 4, wrong = 1 } = {},
+  { attempts = 4, wrong = 1, slow = 0 } = {},
 ): SessionResult => ({
   startedAt: '2026-01-02T10:00:00.000Z',
   durationPerQuestionMs: 4000,
@@ -97,6 +98,6 @@ export const sessionOverPair = (
   answers: Array.from({ length: attempts }, (_, i) => ({
     question: { a, b, op: 'mul' as const, expected: a * b },
     given: i < wrong ? a * b + 1 : a * b,
-    elapsedMs: 2000,
+    elapsedMs: i >= wrong && i < wrong + slow ? 5000 : 2000,
   })),
 });

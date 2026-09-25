@@ -127,6 +127,15 @@
   list-style: none;
   padding: 0;
   margin: 0;
+  /* One grid for the whole list, rows as `display: contents`: the label and
+     count columns are as wide as their widest entry, so every bar track is
+     the same width. Bars are percentages of their track, and two pairs with
+     the same rate must be the same length whatever their count says. */
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  column-gap: 0.6rem;
+  row-gap: 0.4rem;
+  align-items: center;
 }
 .pairs__empty {
   color: var(--color-fg-muted);
@@ -134,18 +143,15 @@
   margin: 0;
 }
 .pairs__row {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin: 0.4rem 0;
+  display: contents;
 }
 .pairs__pair {
-  width: 4rem;
+  /* "12 × 12" sizes the column; it never breaks after the ×. */
+  white-space: nowrap;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 .pairs__barwrap {
-  flex: 1;
   background: var(--color-chip-bg);
   border-radius: 5px;
   height: 16px;
@@ -157,7 +163,9 @@
   border-radius: 5px;
 }
 .pairs__num {
-  width: 3.5rem;
+  /* "0 / 3 · 3 🐢" is wider than "2 / 5": it sizes the column, and never
+     pushes the 🐢 under the number. */
+  white-space: nowrap;
   text-align: right;
   color: var(--color-fg-muted);
   font-size: 0.85rem;

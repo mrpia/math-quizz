@@ -101,10 +101,14 @@ recent one.
 **Questions are stored as a pair, never as rendered text.** A question is
 `{ a, b, op, expected }`. For `op: "mul"` the child sees `a × b` and `expected`
 is `a×b`. For `op: "div"` the child sees `(a×b) ÷ a` and `expected` is `b`. The
-same stored pair backs both directions. Import enforces this: `a` must be one of
-the tables (2–12, 15, 24, 25), `b` one of the multipliers (2–12), and `expected`
-the right answer for `op`. A single question that breaks any of the three makes
-the whole file corrupt, the same as any other structural fault.
+same stored pair backs both directions. Import enforces this: `a` and `b` must
+be positive integers and `expected` the right answer for `op`. A single question
+that breaks either makes the whole file corrupt, the same as any other
+structural fault. The operands are *not* held to the tables the app offers
+today: those changed once (multipliers 1 and 15 went on 2026-06-13), a session
+played before that is real data, and an export the app wrote must always import
+again. A pair outside today's tables counts in the statistics but has no cell
+on the heat-map.
 
 **Error keys are canonical.** `errors` is keyed `"<low>x<high>"` with the
 operands sorted ascending, so 7×8, 8×7 and 56÷7 all accumulate under `"7x8"`.
@@ -175,8 +179,11 @@ Structure and settings are handled by deliberately different rules:
   progress screen.
 - **Settings are sanitised, never rejected.** Every setting has a safe default,
   so an out-of-range number is clamped to the range the Settings form accepts
-  and an unknown enum value falls back to the default. `selectedTables` can
-  never end up empty — question generation throws on an empty selection.
+  and an unknown enum value falls back to the default. `durationPerQuestionMs`
+  is also rounded to a multiple of 10 ms, the finest step the timer and the
+  target labels show, so a `2255` is applied as `2260` rather than scored
+  against a number the child never sees. `selectedTables` can never end up
+  empty — question generation throws on an empty selection.
 
 Unknown fields in the envelope are dropped on import. A `history` longer than 50
 imports fine but is trimmed to the newest 50, the same cap the app applies to

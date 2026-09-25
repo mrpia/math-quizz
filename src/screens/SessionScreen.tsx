@@ -30,7 +30,9 @@ export const SessionScreen = ({ profileId, settings, onComplete, onCancel }: Pro
   const [index, setIndex] = useState(0);
   const [given, setGiven] = useState<string>('');
   const startedAtRef = useRef<string>(new Date().toISOString());
-  const questionStartRef = useRef<number>(performance.now());
+  // State, not a ref: the Timer renders from it, and `submit` scores against
+  // it, so it changes together with `index` in one render (#48).
+  const [questionStartedAt, setQuestionStartedAt] = useState(() => performance.now());
   const answersRef = useRef<AnswerRecord[]>([]);
   const completedRef = useRef<boolean>(false);
 
@@ -54,7 +56,7 @@ export const SessionScreen = ({ profileId, settings, onComplete, onCancel }: Pro
     const record: AnswerRecord = {
       question: questions[index],
       given: value,
-      elapsedMs: performance.now() - questionStartRef.current,
+      elapsedMs: performance.now() - questionStartedAt,
     };
     const next = [...answersRef.current, record];
     answersRef.current = next;
@@ -63,7 +65,7 @@ export const SessionScreen = ({ profileId, settings, onComplete, onCancel }: Pro
       finishIfDone(next);
       return;
     }
-    questionStartRef.current = performance.now();
+    setQuestionStartedAt(performance.now());
     setIndex(next.length);
   };
 
@@ -97,12 +99,7 @@ export const SessionScreen = ({ profileId, settings, onComplete, onCancel }: Pro
         <div className="session__counter">
           {t('session.counter', { n: index + 1, total: questions.length })}
         </div>
-        <Timer
-          targetMs={settings.durationPerQuestionMs}
-          // Read in render on purpose: `submit` sets it together with
-          // `setIndex`, so every question change re-renders with the new value.
-          startedAt={questionStartRef.current}
-        />
+        <Timer targetMs={settings.durationPerQuestionMs} startedAt={questionStartedAt} />
       </div>
       <QuestionCard question={current} given={given} />
       <NumPad

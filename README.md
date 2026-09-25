@@ -99,10 +99,11 @@ by `vite preview`, and earns its keep only where `jsdom` cannot follow:
 | Spec | What only a browser can show |
 |---|---|
 | `offline.spec.ts` | the service worker installs, caches the shell and serves it with the network gone; a launch while online still prefers the network |
-| `backup.spec.ts` | a real download, saved to disk, fed back through the real file picker |
+| `backup.spec.ts` | a real download, saved to disk, fed back through the real file picker — as a restore, and as a merge that matches on the ids the file carries |
 | `profiles.spec.ts` | the active profile and its history survive an actual page reload |
 | `bundle.spec.ts` | the built site serves the manifest, the icons, relative asset paths and the version `package.json` declares |
 | `session.spec.ts` | the on-screen pad and a physical keyboard on a tablet-sized viewport, timed by a real clock |
+| `progress.spec.ts` | the pair count stays on one line at phone width — layout, which Vitest never computes |
 
 `playwright.config.ts` builds and starts the preview server itself, so
 `pnpm test:e2e` needs nothing running first — the first run also needs
@@ -278,10 +279,12 @@ histories; the user-facing `Settings` object is preserved.
 
 **Settings → Tes données** writes one profile to one JSON file and reads it back
 — the only backup an app with no backend can offer, and the way to move a
-history between devices. Import replaces the destination profile (it does not
-merge) behind a confirmation dialog that asks *which* profile to overwrite. The
-registry is not part of the file, so importing never creates, renames or removes
-a profile.
+history between devices. The import dialog asks *which* profile the file lands
+in and whether it **replaces** that profile (a restore: settings and both
+histories become the file's) or is **added** to it (a merge: sessions the
+profile already holds are skipped, the rest are sorted in, the destination's
+settings stay). The registry is not part of the file, so importing never
+creates, renames or removes a profile.
 
 The file format is a published contract, not an internal detail:
 

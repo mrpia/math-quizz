@@ -26,6 +26,7 @@ export const ImportModeToggle = ({ value, onChange }: Props) => {
           key={opt.id}
           type="button"
           role="radio"
+          data-testid={`import-mode-${opt.id}`}
           aria-checked={value === opt.id}
           className={`mode-toggle__option${value === opt.id ? ' mode-toggle__option--on' : ''}`}
           onClick={() => onChange(opt.id)}

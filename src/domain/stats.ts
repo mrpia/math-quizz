@@ -23,8 +23,8 @@
  * is testable without mocking a clock, and never blanks the progress screen
  * after a school holiday the way elapsed-time decay would.
  */
-import type { SessionResult, AnswerRecord } from './session';
-import { pointsFor } from './scoring';
+import type { SessionResult } from './session';
+import { outcomeOf, pointsFor } from './scoring';
 
 /**
  * Sessions after which an attempt carries half the weight of one from the
@@ -58,20 +58,6 @@ export const canonicalKey = (a: number, b: number): string => {
   return `${lo}x${hi}`;
 };
 
-type Outcome = 'correct' | 'slow' | 'error' | 'timeout';
-
-const classify = (record: AnswerRecord, targetMs: number): Outcome => {
-  // Paper mode never sees the written answer, so the child's own mark wins.
-  if (record.selfMarkedCorrect !== undefined) {
-    return record.selfMarkedCorrect ? 'correct' : 'error';
-  }
-  // Legacy only: screen questions no longer time out, but old histories
-  // still carry `given: null` records and must keep counting them.
-  if (record.given === null) return 'timeout';
-  if (record.given !== record.question.expected) return 'error';
-  return record.elapsedMs <= targetMs ? 'correct' : 'slow';
-};
-
 const EMPTY: PairCounters = {
   attempts: 0,
   errors: 0,
@@ -92,11 +78,13 @@ export const aggregatePairs = (history: SessionResult[]): PairCounterMap => {
     for (const record of session.answers) {
       const key = canonicalKey(record.question.a, record.question.b);
       const prev = stats[key] ?? EMPTY;
-      const outcome = classify(record, session.durationPerQuestionMs);
+      // The verdict and the credit come from the same rule (`scoring.ts`),
+      // so a 🟡 on the results screen is a `slow` here and nowhere a `correct`.
+      const outcome = outcomeOf(record, session.durationPerQuestionMs);
       const failure = 1 - pointsFor(record, session);
       stats[key] = {
         attempts: prev.attempts + 1,
-        errors: prev.errors + (outcome === 'error' ? 1 : 0),
+        errors: prev.errors + (outcome === 'wrong' ? 1 : 0),
         timeouts: prev.timeouts + (outcome === 'timeout' ? 1 : 0),
         slow: prev.slow + (outcome === 'slow' ? 1 : 0),
         weightedAttempts: prev.weightedAttempts + weight,

@@ -75,6 +75,22 @@ export const SETTINGS_BOUNDS = {
   partialCreditFactor: { min: 0, max: 1 },
 } as const;
 
+/**
+ * The finest step a target time is stored at. The timer and every target
+ * label show at most hundredths of a second, so a target between two of them
+ * (a typed 2.255 s, an imported 2255 ms) would be scored against a number the
+ * child cannot see: "cible 2.25s" while 2.251 s still counts as fast. Both
+ * ways in — the Settings form and `sanitizeSettings` — snap to this grid.
+ *
+ * Whole milliseconds first, then the grid, on both paths: a typed "2.255"
+ * arrives as 2254.9999999999995 and an imported 2254.9 as itself, and both
+ * must land where an integer 2255 does, on 2260.
+ */
+export const TARGET_STEP_MS = 10;
+
+export const snapTargetMs = (ms: number): number =>
+  Math.round(Math.round(ms) / TARGET_STEP_MS) * TARGET_STEP_MS;
+
 export const DEFAULT_SETTINGS: Settings = {
   durationPerQuestionMs: 4000,
   questionCount: 22,

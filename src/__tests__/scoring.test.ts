@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { pointsFor, totalScore } from '../domain/scoring';
+import { outcomeOf, pointsFor, totalScore } from '../domain/scoring';
 import type { AnswerRecord, Settings } from '../domain/session';
 import type { Question } from '../domain/question';
 
@@ -105,5 +105,38 @@ describe('pointsFor — self-marked (pen-and-paper)', () => {
       selfMarkedCorrect: false,
     };
     expect(pointsFor(record, settings)).toBe(0);
+  });
+});
+
+describe('outcomeOf — the one verdict scoring, statistics and the results screen share', () => {
+  test('right up to and including the target is correct, past it is slow', () => {
+    expect(outcomeOf(rec(mkQ(7, 8), 56, 1500), 4000)).toBe('correct');
+    expect(outcomeOf(rec(mkQ(7, 8), 56, 4000), 4000)).toBe('correct');
+    expect(outcomeOf(rec(mkQ(7, 8), 56, 4001), 4000)).toBe('slow');
+  });
+
+  test('a wrong answer is wrong however fast, a missing one is a timeout', () => {
+    expect(outcomeOf(rec(mkQ(7, 8), 49, 100), 4000)).toBe('wrong');
+    expect(outcomeOf(rec(mkQ(7, 8), 49, 9000), 4000)).toBe('wrong');
+    expect(outcomeOf(rec(mkQ(7, 8), null, 4000), 4000)).toBe('timeout');
+  });
+
+  test('a self-marked record (paper, training) is never slow: those modes are untimed', () => {
+    const slowButMarked: AnswerRecord = {
+      question: mkQ(7, 8),
+      given: 56,
+      elapsedMs: 999_999,
+      selfMarkedCorrect: true,
+    };
+    expect(outcomeOf(slowButMarked, 4000)).toBe('correct');
+    expect(outcomeOf({ ...slowButMarked, selfMarkedCorrect: false }, 4000)).toBe('wrong');
+  });
+
+  test('pointsFor follows the verdict: 1, the partial factor, 0, 0', () => {
+    const at = { durationPerQuestionMs: 4000, partialCreditFactor: 0.25 };
+    expect(pointsFor(rec(mkQ(7, 8), 56, 4000), at)).toBe(1);
+    expect(pointsFor(rec(mkQ(7, 8), 56, 4001), at)).toBe(0.25);
+    expect(pointsFor(rec(mkQ(7, 8), 49, 1), at)).toBe(0);
+    expect(pointsFor(rec(mkQ(7, 8), null, 1), at)).toBe(0);
   });
 });

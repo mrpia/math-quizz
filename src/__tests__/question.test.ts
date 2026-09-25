@@ -8,7 +8,7 @@ import {
   UNPRACTISED_PRIOR_ATTEMPTS,
   drawRate,
 } from '../domain/question';
-import { MULTIPLIERS } from '../domain/tables';
+import { MULTIPLICANDS, MULTIPLIERS } from '../domain/tables';
 import type { Settings } from '../domain/session';
 import type { PairCounterMap, PairCounters } from '../domain/stats';
 
@@ -115,6 +115,21 @@ describe('generateQuestions', () => {
     }
     // Both expected about 286; the old pool gives about 545 against 273.
     expect(commutative / square).toBeLessThan(1.4);
+  });
+
+  test('all 14 tables make a pool of 99 facts, so a session only repeats past 99', () => {
+    // Tables 2..12 against multipliers 2..12: 11 squares + 55 unordered pairs
+    // = 66 facts. Tables 15, 24 and 25 are never multipliers, so each of their
+    // 11 facts stands alone: 33 more. Before #41 the pool held 154 entries.
+    const all = baseSettings({ selectedTables: [...MULTIPLICANDS], adaptiveDraw: 'off' });
+    const keysOf = (qs: { a: number; b: number }[]) => new Set(qs.map((q) => key(q.a, q.b)));
+
+    // Sampled without replacement while the pool covers the count: no repeat.
+    expect(keysOf(generateQuestions({ ...all, questionCount: 99 })).size).toBe(99);
+    // One past the pool: every fact once, then exactly one repeat.
+    const hundred = generateQuestions({ ...all, questionCount: 100 });
+    expect(hundred).toHaveLength(100);
+    expect(keysOf(hundred).size).toBe(99);
   });
 
   test('pool smaller than questionCount: returns questionCount questions with repetitions', () => {

@@ -203,10 +203,47 @@ describe('validateBackup — questions must be consistent (#45)', () => {
   it.each<[string, Question]>([
     ['a product whose expected is not a×b', { a: 7, b: 8, op: 'mul', expected: 999 }],
     ['a division whose expected is not b', { a: 7, b: 8, op: 'div', expected: 56 }],
-    ['a table outside MULTIPLICANDS', { a: 13, b: 8, op: 'mul', expected: 104 }],
-    ['a multiplier outside MULTIPLIERS', { a: 7, b: 13, op: 'mul', expected: 91 }],
+    ['a pair outside the tables with a wrong answer', { a: 13, b: 13, op: 'mul', expected: 170 }],
+    ['a fractional operand', { a: 7.5, b: 8, op: 'mul', expected: 60 }],
+    ['a zero operand', { a: 0, b: 8, op: 'mul', expected: 0 }],
+    ['a negative operand', { a: 7, b: -8, op: 'mul', expected: -56 }],
   ])('rejects %s', (_label, question) => {
     expect(withHistory(withQuestion(question))).toEqual({ ok: false, problem: 'corrupt' });
+  });
+
+  // The tables have changed once (2026-06-13: multiplier 15 and 1 went, 24
+  // and 25 came) and a session played the day before survives in real
+  // storage. An export the app wrote must import again, so membership in
+  // today's tables is not a condition — only that the question is a real
+  // one, with positive whole operands and the right answer.
+  it.each<[string, Question]>([
+    ['2 × 15 asked as a division (a pre-deploy session)', { a: 2, b: 15, op: 'div', expected: 15 }],
+    ['15 × 15, a square no table offers any more', { a: 15, b: 15, op: 'mul', expected: 225 }],
+    ['3 × 1 as a division, from when 1 was a multiplier', { a: 3, b: 1, op: 'div', expected: 1 }],
+    ['13 × 8, a pair the app never offered', { a: 13, b: 8, op: 'mul', expected: 104 }],
+  ])('accepts %s when the arithmetic holds', (_label, question) => {
+    expect(ok(withHistory(withQuestion(question))).data.history[0].answers).toHaveLength(1);
+  });
+
+  it('imports the 2026-06-12 session shape: tables 2–12 and 15, mix, multipliers 1 and 15', () => {
+    const questions: Question[] = [
+      { a: 2, b: 15, op: 'div', expected: 15 },
+      { a: 12, b: 15, op: 'mul', expected: 180 },
+      { a: 15, b: 15, op: 'mul', expected: 225 },
+      { a: 3, b: 1, op: 'div', expected: 1 },
+      { a: 4, b: 15, op: 'mul', expected: 60 },
+      { a: 15, b: 1, op: 'div', expected: 1 },
+      { a: 7, b: 8, op: 'mul', expected: 56 },
+    ];
+    const history = [
+      {
+        ...session(1),
+        selectedTables: [2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 15],
+        mode: 'mix' as const,
+        answers: questions.map((question) => ({ question, given: question.expected, elapsedMs: 1 })),
+      },
+    ];
+    expect(ok(withHistory(history)).data.history[0].answers).toHaveLength(questions.length);
   });
 
   it('rejects the whole file for one bad record among valid ones', () => {
@@ -359,6 +396,18 @@ describe('validateBackup — settings are sanitized, not rejected', () => {
     expect(s.partialCreditFactor).toBe(1);
   });
 
+  it('snaps the target time to the 10 ms grid the timer can show', () => {
+    // The timer and the labels show hundredths at most, so a target between
+    // two hundredths would be applied but never shown. Same as the form.
+    expect(withSettings({ durationPerQuestionMs: 2255 }).durationPerQuestionMs).toBe(2260);
+    expect(withSettings({ durationPerQuestionMs: 2254.4 }).durationPerQuestionMs).toBe(2250);
+    // Whole ms first, so 2254.9 lands where the form's "2.2549" does.
+    expect(withSettings({ durationPerQuestionMs: 2254.9 }).durationPerQuestionMs).toBe(2260);
+    expect(withSettings({ durationPerQuestionMs: 2.255 * 1000 }).durationPerQuestionMs).toBe(2260);
+    expect(withSettings({ durationPerQuestionMs: 2250 }).durationPerQuestionMs).toBe(2250);
+    expect(withSettings({ durationPerQuestionMs: 6500 }).durationPerQuestionMs).toBe(6500);
+  });
+
   it('keeps a settings blob that is not an object from breaking the import', () => {
     expect(withSettings('nope')).toEqual(DEFAULT_SETTINGS);
   });
@@ -406,10 +455,12 @@ describe('published JSON Schema (drift guard)', () => {
     expect(schema.properties.data.properties.errors.deprecated).toBe(true);
   });
 
-  it('allows exactly the operands validateBackup allows', () => {
+  it('allows exactly the operands validateBackup allows: positive integers, any table', () => {
     const { a, b } = schema.$defs.question.properties;
-    expect(a.enum).toEqual([...MULTIPLICANDS]);
-    expect(b.enum).toEqual([...MULTIPLIERS]);
+    for (const operand of [a, b]) {
+      expect(operand).toMatchObject({ type: 'integer', minimum: 1 });
+      expect(operand).not.toHaveProperty('enum');
+    }
   });
 
   it('declares the session id as an optional, documented string (#18)', () => {

@@ -65,7 +65,7 @@
       "type": "object",
       "properties": {
         "durationPerQuestionMs": {
-          "description": "Target answer time in milliseconds. Answering within it earns a full point; slower but correct earns partialCreditFactor. Clamped to 1000–60000 on import.",
+          "description": "Target answer time in milliseconds. Answering within it earns a full point; slower but correct earns partialCreditFactor. Clamped to 1000–60000 and rounded to a multiple of 10 on import, the finest step the timer shows.",
           "type": "number",
           "minimum": 1000,
           "maximum": 60000
@@ -184,12 +184,14 @@
       "required": ["a", "b", "op", "expected"],
       "properties": {
         "a": {
-          "description": "First operand: the table being drilled. One of the tables the app offers.",
-          "enum": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 24, 25]
+          "description": "First operand: the table being drilled. A positive integer; the app currently offers 2–12, 15, 24 and 25, but older sessions may hold a table that has since been dropped, and they still import.",
+          "type": "integer",
+          "minimum": 1
         },
         "b": {
-          "description": "Second operand: the multiplier, 2 to 12.",
-          "enum": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+          "description": "Second operand: the multiplier. A positive integer; currently 2–12, but 1 and 15 were multipliers before 2026-06-13 and sessions from then still import.",
+          "type": "integer",
+          "minimum": 1
         },
         "op": {
           "description": "Which way the pair is asked.",

@@ -21,6 +21,39 @@ export type ReleaseNote = {
 /** Newest first. */
 export const releaseNotes: ReleaseNote[] = [
   {
+    version: '1.2.0',
+    date: '2026-09-25',
+    changes: {
+      fr: [
+        "Dans Paramètres → Tes données, quand tu importes un fichier, tu peux maintenant choisir « Ajouter » : les résultats du fichier viennent s'ajouter aux tiens au lieu de les remplacer. Pratique pour réunir ce que tu as fait sur la tablette et sur l'ordinateur. « Remplacer » reste le choix par défaut.",
+        "Dans « Mes résultats », la « Carte des tables » a une vraie légende : « tu sais », « à revoir », « à confirmer » et « pas joué ». Une case ne prend sa couleur qu'après 3 essais, donc la carte peut paraître moins verte qu'avant : rien n'est perdu, tes cases attendent juste d'être confirmées. Quand tu sais toute une table, sa ligne gagne une ⭐.",
+        "Une bonne réponse trop lente (🐢) compte maintenant un peu dans « Paires à revoir », et le nombre de réponses lentes s'affiche à côté du score de la paire. C'est justement ce que tu t'entraînes à améliorer.",
+        "Les tests papier ne sont plus enregistrés : ils servent juste à t'entraîner, et le bouton « Enregistrer le résultat » a disparu.",
+        "3 × 4 et 4 × 3 comptent comme un seul calcul, donc ils ne reviennent plus deux fois plus souvent que 3 × 3.",
+        "Le chrono et la page de résultats montrent maintenant exactement le temps cible (par exemple 2.5 s au lieu de 3 s) et un score comme 0.25 sans l'arrondir. Le temps affiché est arrondi vers le haut : si une réponse est marquée « trop lent », le chiffre est bien au-dessus de la cible.",
+        "Dans les Paramètres, si tu vides un champ et que tu enregistres, l'ancienne valeur est gardée au lieu de passer au minimum.",
+      ],
+      de: [
+        'Wenn du in Einstellungen → Deine Daten eine Datei importierst, kannst du jetzt « Hinzufügen » wählen: Die Ergebnisse aus der Datei kommen zu deinen dazu, statt sie zu ersetzen. Praktisch, um Tablet und Computer zusammenzuführen. « Ersetzen » bleibt die Vorauswahl.',
+        'Unter « Meine Ergebnisse » hat die « Reihen-Karte » jetzt eine richtige Legende: « kannst du », « üben », « noch unsicher » und « nicht gespielt ». Ein Feld bekommt seine Farbe erst nach 3 Versuchen, darum kann die Karte weniger grün aussehen als vorher: Nichts ist verloren, deine Felder warten nur auf Bestätigung. Wenn du eine ganze Reihe kannst, bekommt ihre Zeile einen ⭐.',
+        'Eine richtige, aber zu langsame Antwort (🐢) zählt jetzt ein bisschen im Abschnitt « Paare zum Üben », und die Zahl der langsamen Antworten steht neben dem Ergebnis des Paars. Genau das übst du ja.',
+        'Papiertests werden nicht mehr gespeichert: Sie sind nur zum Üben da, und der Knopf « Ergebnis speichern » ist weg.',
+        '3 × 4 und 4 × 3 zählen als eine Rechnung, darum kommen sie nicht mehr doppelt so oft dran wie 3 × 3.',
+        'Der Timer und die Ergebnisseite zeigen jetzt genau die Zielzeit (zum Beispiel 2.5 s statt 3 s) und Punkte wie 0.25 ohne Runden. Die angezeigte Zeit wird aufgerundet: Steht bei einer Antwort « zu langsam », liegt die Zahl auch wirklich über dem Ziel.',
+        'Wenn du in den Einstellungen ein Feld leerst und speicherst, bleibt der alte Wert, statt auf das Minimum zu springen.',
+      ],
+      en: [
+        'When you import a file in Settings → Your data, you can now pick "Add": the file\'s results are added to yours instead of replacing them. Handy for bringing the tablet and the computer together. "Replace" stays the default.',
+        'In "My results", the "Tables map" has a proper legend: "got it", "to review", "not sure yet" and "not played". A cell only gets its colour after 3 tries, so the map may look less green than before: nothing is lost, your cells are just waiting to be confirmed. When you know a whole table, its row gets a ⭐.',
+        'A right answer that was too slow (🐢) now counts a little in "Pairs to review", and the number of slow answers shows next to the pair\'s score. That is exactly what you are practising.',
+        'Paper tests are no longer saved: they are just for practice, and the "Save result" button is gone.',
+        '3 × 4 and 4 × 3 count as one problem, so they no longer come up twice as often as 3 × 3.',
+        'The timer and the results page now show the exact target time (say 2.5 s instead of 3 s) and a score like 0.25 without rounding. The time shown is rounded up: if an answer says "too slow", the number really is above the target.',
+        'In Settings, if you clear a field and save, the old value is kept instead of dropping to the minimum.',
+      ],
+    },
+  },
+  {
     version: '1.1.0',
     date: '2026-09-23',
     changes: {

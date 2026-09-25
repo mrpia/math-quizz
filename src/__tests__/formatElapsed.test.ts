@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { formatElapsed } from '../domain/format';
+import { SETTINGS_BOUNDS, TARGET_STEP_MS } from '../domain/session';
 
 describe('formatElapsed', () => {
   test('starts at zero with one decimal', () => {
@@ -33,5 +34,25 @@ describe('formatElapsed', () => {
         expect(shownMs > target).toBe(ms > target);
       }
     }
+  });
+
+  test('...for every target the app can store: each grid step from min to max', () => {
+    // A target off the grid (2255) would break this: "2.26" for a fast
+    // 2251 ms. Settings and the importer snap to the grid, so none is stored.
+    // The shown seconds are turned back into whole ms before comparing, so
+    // the check cannot fail on its own float arithmetic (4.03 × 1000 is not
+    // 4030 in floating point).
+    const { min, max } = SETTINGS_BOUNDS.durationPerQuestionMs;
+    let checked = 0;
+    for (let target = min; target <= max; target += TARGET_STEP_MS) {
+      for (let ms = target - 15; ms <= target + 15; ms += 0.5) {
+        const shownMs = Math.round(Number(formatElapsed(ms, target)) * 1000);
+        if ((shownMs > target) !== ms > target) {
+          throw new Error(`formatElapsed(${ms}, ${target}) shows ${shownMs} ms`);
+        }
+        checked++;
+      }
+    }
+    expect(checked).toBe(((max - min) / TARGET_STEP_MS + 1) * 61);
   });
 });

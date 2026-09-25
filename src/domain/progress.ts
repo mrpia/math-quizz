@@ -17,6 +17,8 @@ export type PairStat = {
   attempts: number;
   errors: number;
   timeouts: number;
+  /** Raw errors + timeouts — the number the row shows, as the heat-map cell does. */
+  failures: number;
   /** Raw correct-but-slow answers, shown next to the count as "· 3 🐢". */
   slow: number;
   /** Recency-weighted failure share — what the row is ranked and coloured by. */
@@ -102,6 +104,7 @@ export const trickiestPairs = (
         attempts: counters.attempts,
         errors: counters.errors,
         timeouts: counters.timeouts,
+        failures: counters.errors + counters.timeouts,
         slow: counters.slow,
         errorRate: weightedErrorRate(counters) ?? 0,
       };

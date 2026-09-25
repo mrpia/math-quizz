@@ -13,21 +13,24 @@
  *   error key fails the whole file. Silently dropping records would hand the
  *   child a partial history that looks complete, and a bad pair key would reach
  *   `trickiestPairs`, whose `key.split('x').map(Number)` then renders
- *   "NaN × NaN". The same goes for a question the app could never have asked
- *   (#45): its operands must come from the tables and its `expected` must be
- *   the right answer, or a hand-edited "7 × 8 = 999" would score as correct;
+ *   "NaN × NaN". The same goes for a question that is not one (#45): its
+ *   operands must be positive integers and its `expected` must be the right
+ *   answer, or a hand-edited "7 × 8 = 999" would score as correct. Membership
+ *   in today's tables is not required: they changed once, and an export the
+ *   app wrote before that must import again;
  * - **settings are sanitised, not rejected** — every setting has a safe default,
  *   so an out-of-range number is clamped and an unknown enum value falls back.
  *   `loadSettings` runs stored settings through the same `sanitizeSettings`
  *   (#46), so the two ways in cannot drift. Notably `selectedTables` can
  *   never end up empty: `generateQuestions` throws on an empty selection.
  */
-import { DEFAULT_SETTINGS, SETTINGS_BOUNDS } from './session';
+import { DEFAULT_SETTINGS, SETTINGS_BOUNDS, snapTargetMs } from './session';
 import type { AdaptiveDraw, AnswerMode, AnswerRecord, SessionResult, Settings } from './session';
 import { expectedAnswer } from './question';
+import { canonicalKey } from './stats';
 import type { Mode, Operator, Question } from './question';
 import { SITE_URL } from '../config/site';
-import { MULTIPLICANDS, MULTIPLIERS } from './tables';
+import { MULTIPLICANDS } from './tables';
 import { LANGUAGES } from '../i18n';
 import type { Language } from '../i18n/types';
 
@@ -128,7 +131,13 @@ const ANSWER_MODES: readonly string[] = [
   'list',
 ] satisfies AnswerMode[];
 const TABLES: readonly number[] = MULTIPLICANDS;
-const FACTORS: readonly number[] = MULTIPLIERS;
+
+// Operands are whole and positive, but not held to today's tables: the tables
+// changed once (2026-06-13), a session played the day before is real data,
+// and an export the app wrote must import again. What is held is the
+// arithmetic — see `isQuestion`.
+const isPositiveInteger = (value: unknown): value is number =>
+  isNumber(value) && Number.isInteger(value) && value >= 1;
 const ADAPTIVE_DRAWS: readonly string[] = [
   'off',
   'moderate',
@@ -141,13 +150,11 @@ const PAIR_KEY = /^\d+x\d+$/;
 
 const isQuestion = (value: unknown): value is Question =>
   isRecord(value) &&
-  isNumber(value.a) &&
-  isNumber(value.b) &&
+  isPositiveInteger(value.a) &&
+  isPositiveInteger(value.b) &&
   isNumber(value.expected) &&
   isString(value.op) &&
   OPERATORS.includes(value.op) &&
-  TABLES.includes(value.a) &&
-  FACTORS.includes(value.b) &&
   value.expected === expectedAnswer(value.a, value.b, value.op as Operator);
 
 const isAnswerRecord = (value: unknown): value is AnswerRecord =>
@@ -229,10 +236,13 @@ const readTables = (value: unknown): number[] => {
 export const sanitizeSettings = (value: unknown): Settings => {
   const raw = isRecord(value) ? value : {};
   return {
-    durationPerQuestionMs: readNumber(
-      raw.durationPerQuestionMs,
-      SETTINGS_BOUNDS.durationPerQuestionMs,
-      DEFAULT_SETTINGS.durationPerQuestionMs,
+    // Snapped to the grid the timer can show; see `TARGET_STEP_MS`.
+    durationPerQuestionMs: snapTargetMs(
+      readNumber(
+        raw.durationPerQuestionMs,
+        SETTINGS_BOUNDS.durationPerQuestionMs,
+        DEFAULT_SETTINGS.durationPerQuestionMs,
+      ),
     ),
     questionCount: Math.round(
       readNumber(
@@ -331,9 +341,7 @@ export const summarizeBackup = (backup: Backup) => {
   const pairs = new Set<string>();
   for (const session of [...backup.data.history, ...backup.data.trainingHistory]) {
     for (const { question } of session.answers) {
-      const lo = Math.min(question.a, question.b);
-      const hi = Math.max(question.a, question.b);
-      pairs.add(`${lo}x${hi}`);
+      pairs.add(canonicalKey(question.a, question.b));
     }
   }
   return {

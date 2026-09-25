@@ -251,6 +251,21 @@ describe('trickiestPairs — review cut-off', () => {
   });
 });
 
+describe('trickiestPairs — raw failures', () => {
+  test('carries errors + timeouts as one number, the way a heat-map cell does', () => {
+    // One miss, one legacy timeout, one hit: the row reads "2 / 3".
+    const history = [
+      mkSession([rec(mkQ(7, 8), 50, 1000), rec(mkQ(7, 8), null, 4000), rec(mkQ(7, 8), 56, 1000)]),
+    ];
+    expect(trickiestPairs(history)[0]).toMatchObject({
+      errors: 1,
+      timeouts: 1,
+      failures: 2,
+      attempts: 3,
+    });
+  });
+});
+
 describe('trickiestPairs — slowness (#47)', () => {
   test('a pair answered right but always slowly is listed, with its slow count', () => {
     // 7x8: right every time, always past the 4 s target -> weighted rate 0.5.
@@ -266,7 +281,15 @@ describe('trickiestPairs — slowness (#47)', () => {
     ];
     const top = trickiestPairs(history);
     expect(top).toHaveLength(1);
-    expect(top[0]).toMatchObject({ a: 7, b: 8, attempts: 3, errors: 0, timeouts: 0, slow: 3 });
+    expect(top[0]).toMatchObject({
+      a: 7,
+      b: 8,
+      attempts: 3,
+      errors: 0,
+      timeouts: 0,
+      failures: 0,
+      slow: 3,
+    });
     expect(top[0].errorRate).toBeCloseTo(0.5);
   });
 

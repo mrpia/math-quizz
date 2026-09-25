@@ -174,8 +174,9 @@ Static bundle on **Firebase Hosting** (GCP project `modern-ally-102412`), live a
 fast suite — source modules under jsdom, `src/__tests__/`. `pnpm test:e2e` runs
 Chromium against `dist/` behind `vite preview`, and exists only for what jsdom
 cannot reach: the service worker and Cache Storage, a real page reload, the
-download and file-picker flows, and an unfaked clock. Five specs in `e2e/`;
-adding a sixth means first showing the thing is out of jsdom's reach.
+download and file-picker flows, an unfaked clock, and layout (Vitest runs with
+`css: false`, so nothing wraps or overflows under jsdom). Six specs in `e2e/`;
+adding a seventh means first showing the thing is out of jsdom's reach.
 
 Two mechanics worth knowing before touching either:
 
