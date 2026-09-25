@@ -277,7 +277,7 @@ story for an app that deliberately has no backend.
 ## 10. Merge on import
 
 **Status**: ✅ Done, [#18](https://github.com/mrpia/math-quizz/issues/18),
-unreleased. The import dialog offers **Remplacer** / **Ajouter**. Sessions carry
+shipped in 1.2.0. The import dialog offers **Remplacer** / **Ajouter**. Sessions carry
 a random `id` from record time; `domain/merge.ts` dedupes on it (falling back to
 `startedAt` plus answer count for older sessions), sorts by `startedAt` and
 trims to `HISTORY_LIMIT`. The dialog shows what the cap will drop. Merge keeps

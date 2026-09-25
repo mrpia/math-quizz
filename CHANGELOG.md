@@ -7,6 +7,8 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-25
+
 ### Added
 - **Merge on import** (#18). The import dialog now asks **Remplacer** or
   **Ajouter** (default: Remplacer, the old behaviour). A merge keeps the
@@ -51,21 +53,6 @@ and the project uses [Semantic Versioning](https://semver.org/).
   frequent", which named no noun and left yellow and orange out. Keys
   `heatmap.rare` and `heatmap.frequent` are replaced by `heatmap.mastered`,
   `heatmap.review`, `heatmap.unsure` and `heatmap.tableComplete`.
-- **Paper tests are no longer recorded** (#44). The paper results screen
-  started with every row marked ✅ and 💾 enabled, so tapping Save without
-  comparing recorded a perfect session; and even an honest mark was made
-  against the answers shown on the same screen, so the app had no way to check
-  it. Those sessions also cost real data: decay counts sessions, so each one
-  aged the on-screen results by a step and took one of the 50 history slots.
-  The 💾 button, `ResultsScreen`'s `onSave` and `App`'s save handler are gone;
-  the ✅/❌ toggles and the live score stay for the child's own review, with a
-  `results.paperNotSaved` line saying the test is not saved (replaces
-  `results.save` / `results.saved`). A new `trackedSessions` in `stats.ts`
-  drops `answerMode: 'paper'` sessions at read time, in `loadPairStats` and on
-  the progress screen, so paper sessions saved by older versions stop counting
-  without being deleted from storage or exports. The backup format is
-  unchanged (`formatVersion` 1); the schema and `docs/data-format.md` now say
-  paper records are legacy. List mode already worked this way.
 - **Slow correct answers now count as a weakness** (#47). `aggregatePairs`
   only counted wrong answers, timeouts and paper ❌ marks as failures, so a
   pair answered right in 9 s every time showed as mastered (`heat--0`), stayed
@@ -80,6 +67,27 @@ and the project uses [Semantic Versioning](https://semver.org/).
   not read "0 / 5". Paper and training records are unaffected: they carry a
   right/wrong verdict and never earn partial credit. The `progress.recencyNote`
   caption says so in all three languages.
+- **The target time is stored on a 10 ms grid.** A typed 2.255 s was saved
+  as 2255 ms and an imported 2255 kept as is, while every label shows
+  hundredths at most: "cible 2.25s" while scoring applied 2.255, and the timer
+  read "2.26" for a fast 2251 ms answer. `snapTargetMs` (`session.ts`,
+  `TARGET_STEP_MS` = 10) is the one definition; the Settings form rounds to
+  whole milliseconds and then snaps, `sanitizeSettings` snaps on load and on
+  import, so a typed 2.255 and an imported 2255 both land on 2260. The
+  schema's description says so; it gains no `multipleOf`, because released
+  versions did write 2255 and those exports must keep validating.
+- **Internal: one verdict per answer, and smaller files.** `outcomeOf` in
+  `scoring.ts` is now the only place an answer is judged slow, wrong or a
+  timeout; `pointsFor`, `aggregatePairs` and the results screen consume it
+  (the rule was written three times, in two vocabularies). `PairStat` carries
+  `failures` like `GridCell`. `appendSession` is no longer exported: it was
+  the one write that stamped no id. `summarizeBackup` uses `canonicalKey`.
+  The import dialog is its own component, `ImportDialog`, keyed per picked
+  file. `SessionScreen` holds the question start in state next to the index
+  instead of a ref read during render. Tests pin the 99-fact pool for all 14
+  tables, a merge round-trip through the real download and file picker, and
+  the pairs-list layout at phone width (a sixth Playwright spec, layout being
+  out of jsdom's reach).
 - **3 × 4 and 4 × 3 are now one fact in the draw** (#41). The pool held one
   entry per selected table × multiplier, so with tables 3 and 4 both selected,
   3 × 4 and 4 × 3 each got an entry: every commutative fact was drawn twice as
@@ -101,7 +109,33 @@ and the project uses [Semantic Versioning](https://semver.org/).
   sessions also drifts back toward 0.25. Draw only: the progress screen still
   shows `weightedErrorRate` and keeps its three-attempt threshold.
 
+### Removed
+- **Recording of paper tests, and the 💾 button that did it** (#44). The paper
+  results screen started with every row marked ✅ and 💾 enabled, so tapping Save
+  without comparing recorded a perfect session; and even an honest mark was made
+  against the answers shown on the same screen, so the app had no way to check
+  it. Those sessions also cost real data: decay counts sessions, so each one
+  aged the on-screen results by a step and took one of the 50 history slots. The
+  💾 button, `ResultsScreen`'s `onSave` and `App`'s save handler are gone; the
+  ✅/❌ toggles and the live score stay for the child's own review, with a
+  `results.paperNotSaved` line saying the test is not saved (replaces
+  `results.save` / `results.saved`). A new `trackedSessions` in `stats.ts` drops
+  `answerMode: 'paper'` sessions at read time, in `loadPairStats` and on the
+  progress screen, so paper sessions saved by older versions stop counting
+  without being deleted from storage or exports. The backup format is unchanged
+  (`formatVersion` 1); the schema and `docs/data-format.md` now say paper
+  records are legacy. List mode already worked this way.
+
 ### Fixed
+- **The results list showed "1.0s · trop lent".** It rounded the elapsed time
+  to the nearest tenth, so an answer timed at 1025 ms against a 1 s target
+  read "1.0s" next to "trop lent" while the running timer had shown "1.1s" at
+  the tap — the #48 contradiction, fixed on the timer and left on the results
+  screen. Reproduced ten times out of ten in a real browser. The row now goes
+  through `formatElapsed` with the session's own target.
+- **"0 / 3 · 3 🐢" wrapped onto two lines in "Paires à revoir".** The count
+  had a fixed width sized for "2 / 5"; it is now a minimum with
+  `white-space: nowrap`, and a Playwright spec at 390 px keeps it so.
 - **An emptied Settings field no longer saves as the minimum** (#49). The
   three numeric inputs converted with `Number(e.target.value)`, and a cleared
   `type="number"` field reports `''`, so `Number('')` gave 0. The clamp in
