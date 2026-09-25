@@ -54,7 +54,7 @@ export const en: Record<TranslationKey, string> = {
   'results.title': 'Summary',
   'results.legend': 'Target: {seconds}s — slower answer: {points} pt',
   'results.slow': 'too slow',
-  'results.wrongAnswer': 'answer: {given}',
+  'results.wrongAnswerSpoken': '{operation}: you answered {given}, the correct answer is {expected}',
   'results.noAnswer': 'no answer',
   'results.paperLegend': 'Compare with your sheet, then uncheck ❌ the wrong answers.',
   'results.markCorrect': 'correct',

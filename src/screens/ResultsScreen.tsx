@@ -12,12 +12,32 @@ type Props = {
   onHome: () => void;
 };
 
-const renderOperation = (record: AnswerRecord): string => {
-  const { question } = record;
-  if (question.op === 'mul') {
-    return `${question.a} × ${question.b} = ${question.expected}`;
-  }
-  return `${question.a * question.b} ÷ ${question.a} = ${question.expected}`;
+const renderPrompt = ({ question }: AnswerRecord): string =>
+  question.op === 'mul'
+    ? `${question.a} × ${question.b}`
+    : `${question.a * question.b} ÷ ${question.a}`;
+
+const renderOperation = (record: AnswerRecord): string =>
+  `${renderPrompt(record)} = ${record.question.expected}`;
+
+// A ❌ beside the bold right equation read as "this equation is wrong". The
+// child's answer goes where the answer goes, crossed out, the right one after
+// it. Strikethrough is rarely announced, so screen readers get a sentence.
+const Correction = ({ record }: { record: AnswerRecord }) => {
+  const { t } = useI18n();
+  const prompt = renderPrompt(record);
+  const { expected } = record.question;
+  return (
+    <span className="results__operation">
+      <span aria-hidden>
+        {prompt} = <del className="results__given">{record.given}</del>{' '}
+        <ins className="results__expected">{expected}</ins>
+      </span>
+      <span className="results__sr">
+        {t('results.wrongAnswerSpoken', { operation: prompt, given: record.given ?? '', expected })}
+      </span>
+    </span>
+  );
 };
 
 const ICON: Record<Outcome, string> = {
@@ -54,15 +74,15 @@ const ScreenResults = ({ result }: { result: SessionResult }) => {
               <span className="results__icon" aria-hidden>
                 {ICON[outcome]}
               </span>
-              <span className="results__operation">{renderOperation(record)}</span>
+              {outcome === 'wrong' ? (
+                <Correction record={record} />
+              ) : (
+                <span className="results__operation">{renderOperation(record)}</span>
+              )}
               <span className="results__detail">
                 {outcome === 'correct' && <>{elapsed}s</>}
                 {outcome === 'slow' && <>{elapsed}s · {t('results.slow')}</>}
-                {outcome === 'wrong' && (
-                  <>
-                    {elapsed}s · {t('results.wrongAnswer', { given: record.given ?? '' })}
-                  </>
-                )}
+                {outcome === 'wrong' && <>{elapsed}s</>}
                 {outcome === 'timeout' && <>{t('results.noAnswer')}</>}
               </span>
             </li>
@@ -113,7 +133,6 @@ const PaperResults = ({
 };
 
 const TrainingResults = ({ result }: { result: SessionResult }) => {
-  const { t } = useI18n();
   return (
     <ul className="results__list">
       {result.answers.map((record, i) => {
@@ -123,11 +142,10 @@ const TrainingResults = ({ result }: { result: SessionResult }) => {
             <span className="results__icon" aria-hidden>
               {ok ? '✅' : '❌'}
             </span>
-            <span className="results__operation">{renderOperation(record)}</span>
-            {!ok && (
-              <span className="results__detail">
-                {t('results.wrongAnswer', { given: record.given ?? '' })}
-              </span>
+            {ok ? (
+              <span className="results__operation">{renderOperation(record)}</span>
+            ) : (
+              <Correction record={record} />
             )}
           </li>
         );

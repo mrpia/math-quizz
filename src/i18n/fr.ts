@@ -52,7 +52,7 @@ export const fr = {
   'results.title': 'Bilan',
   'results.legend': 'Cible : {seconds}s — réponse plus lente : {points} pt',
   'results.slow': 'trop lent',
-  'results.wrongAnswer': 'réponse : {given}',
+  'results.wrongAnswerSpoken': '{operation} : tu as répondu {given}, la bonne réponse est {expected}',
   'results.noAnswer': 'pas de réponse',
   'results.paperLegend': 'Compare avec ta feuille, puis décoche ❌ les réponses fausses.',
   'results.markCorrect': 'correct',

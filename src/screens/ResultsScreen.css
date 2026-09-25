@@ -76,6 +76,29 @@
   color: var(--color-fg);
 }
 
+.results__given {
+  color: var(--color-error);
+  font-weight: 400;
+  text-decoration-thickness: 2px;
+}
+
+/* Full-contrast ink, not --color-success: that green is ~2.3:1 on white, and
+   this is the one number the row exists to show. */
+.results__expected {
+  font-weight: 800;
+  text-decoration: none;
+}
+
+/* Visually hidden, still read by screen readers. */
+.results__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .results__detail {
   font-size: 0.85rem;
   color: var(--color-fg-muted);
