@@ -85,7 +85,7 @@ export const ImportDialog = ({
           <p className="settings__hint">
             {t('settings.importMergeWarning', { name: nameOf(target) })}
           </p>
-          <p className="settings__hint">
+          <p className="settings__hint" data-testid="import-merge-summary">
             {t('settings.importMergeSummary', {
               added: mergeCounts.added,
               known: mergeCounts.known,

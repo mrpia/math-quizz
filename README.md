@@ -99,7 +99,7 @@ by `vite preview`, and earns its keep only where `jsdom` cannot follow:
 | Spec | What only a browser can show |
 |---|---|
 | `offline.spec.ts` | the service worker installs, caches the shell and serves it with the network gone; a launch while online still prefers the network |
-| `backup.spec.ts` | a real download, saved to disk, fed back through the real file picker |
+| `backup.spec.ts` | a real download, saved to disk, fed back through the real file picker — as a restore, and as a merge that matches on the ids the file carries |
 | `profiles.spec.ts` | the active profile and its history survive an actual page reload |
 | `bundle.spec.ts` | the built site serves the manifest, the icons, relative asset paths and the version `package.json` declares |
 | `session.spec.ts` | the on-screen pad and a physical keyboard on a tablet-sized viewport, timed by a real clock |
