@@ -103,6 +103,7 @@ by `vite preview`, and earns its keep only where `jsdom` cannot follow:
 | `profiles.spec.ts` | the active profile and its history survive an actual page reload |
 | `bundle.spec.ts` | the built site serves the manifest, the icons, relative asset paths and the version `package.json` declares |
 | `session.spec.ts` | the on-screen pad and a physical keyboard on a tablet-sized viewport, timed by a real clock |
+| `progress.spec.ts` | the pair count stays on one line at phone width — layout, which Vitest never computes |
 
 `playwright.config.ts` builds and starts the preview server itself, so
 `pnpm test:e2e` needs nothing running first — the first run also needs

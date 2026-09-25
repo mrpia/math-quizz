@@ -157,7 +157,10 @@
   border-radius: 5px;
 }
 .pairs__num {
-  width: 3.5rem;
+  /* A minimum, not a width: "0 / 3 · 3 🐢" is wider than "2 / 5" and must
+     stay on one line rather than push the 🐢 under the number. */
+  min-width: 3.5rem;
+  white-space: nowrap;
   text-align: right;
   color: var(--color-fg-muted);
   font-size: 0.85rem;
