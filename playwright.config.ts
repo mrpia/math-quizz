@@ -6,7 +6,8 @@ import { defineConfig, devices } from '@playwright/test';
  * The rule that keeps this suite small: if a test can be written in Vitest, it
  * stays in Vitest. What lives here is only what jsdom cannot reach — the
  * service worker, Cache Storage, a real page reload, the browser's download and
- * file-picker flows, and a clock that is not faked.
+ * file-picker flows, a clock that is not faked, and layout (Vitest runs with
+ * `css: false`, so nothing wraps, overflows or measures under jsdom).
  *
  * `vite preview` is deliberate, not a convenience: `registerServiceWorker()`
  * returns early unless `import.meta.env.PROD`, so none of the PWA specs would
