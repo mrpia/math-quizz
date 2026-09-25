@@ -36,7 +36,7 @@ export const releaseNotes: ReleaseNote[] = [
       de: [
         'Wenn du in Einstellungen → Deine Daten eine Datei importierst, kannst du jetzt « Hinzufügen » wählen: Die Ergebnisse aus der Datei kommen zu deinen dazu, statt sie zu ersetzen. Praktisch, um Tablet und Computer zusammenzuführen. « Ersetzen » bleibt die Vorauswahl.',
         'Unter « Meine Ergebnisse » hat die « Reihen-Karte » jetzt eine richtige Legende: « kannst du », « üben », « noch unsicher » und « nicht gespielt ». Ein Feld bekommt seine Farbe erst nach 3 Versuchen, darum kann die Karte weniger grün aussehen als vorher: Nichts ist verloren, deine Felder warten nur auf Bestätigung. Wenn du eine ganze Reihe kannst, bekommt ihre Zeile einen ⭐.',
-        'Eine richtige, aber zu langsame Antwort (🐢) zählt jetzt ein bisschen bei den « Paaren zum Üben », und die Zahl der langsamen Antworten steht neben dem Ergebnis des Paars. Genau das übst du ja.',
+        'Eine richtige, aber zu langsame Antwort (🐢) zählt jetzt ein bisschen im Abschnitt « Paare zum Üben », und die Zahl der langsamen Antworten steht neben dem Ergebnis des Paars. Genau das übst du ja.',
         'Papiertests werden nicht mehr gespeichert: Sie sind nur zum Üben da, und der Knopf « Ergebnis speichern » ist weg.',
         '3 × 4 und 4 × 3 zählen als eine Rechnung, darum kommen sie nicht mehr doppelt so oft dran wie 3 × 3.',
         'Der Timer und die Ergebnisseite zeigen jetzt genau die Zielzeit (zum Beispiel 2.5 s statt 3 s) und Punkte wie 0.25 ohne Runden. Die angezeigte Zeit wird aufgerundet: Steht bei einer Antwort « zu langsam », liegt die Zahl auch wirklich über dem Ziel.',
