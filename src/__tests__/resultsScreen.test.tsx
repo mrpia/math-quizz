@@ -95,6 +95,36 @@ describe('ResultsScreen — target legend', () => {
   });
 });
 
+describe('ResultsScreen — elapsed time is rounded up like the timer (#48)', () => {
+  test('an answer scored slow never reads as the target or less', () => {
+    // 4030 ms against a 4 s target: toFixed(1) said "4.0s · trop lent", the
+    // same contradiction #48 removed from the running timer.
+    const justOver: SessionResult = {
+      ...screenResult,
+      questionCount: 2,
+      answers: [
+        { question: q(7, 8), given: 56, elapsedMs: 4030 },
+        { question: q(6, 9), given: 54, elapsedMs: 4000 },
+      ],
+    };
+    render(<ResultsScreen result={justOver} onReplay={noop} onHome={noop} />);
+    expect(screen.getByTestId('results-row-slow')).toHaveTextContent('4.1s · trop lent');
+    expect(screen.getByTestId('results-row-ok')).toHaveTextContent('4.0s');
+    expect(screen.queryByText(/^4\.0s · trop lent/)).toBeNull();
+  });
+
+  test('a target off the tenth grid shows hundredths, as the timer does', () => {
+    const fine: SessionResult = {
+      ...screenResult,
+      durationPerQuestionMs: 2250,
+      questionCount: 1,
+      answers: [{ question: q(7, 8), given: 56, elapsedMs: 2251 }],
+    };
+    render(<ResultsScreen result={fine} onReplay={noop} onHome={noop} />);
+    expect(screen.getByTestId('results-row-slow')).toHaveTextContent('2.26s · trop lent');
+  });
+});
+
 describe('ResultsScreen — partial credit precision (#39)', () => {
   test('a 0.25 credit is shown as 0.25 in the score and the legend, not 0.3', () => {
     const quarter: SessionResult = {

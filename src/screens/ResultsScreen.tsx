@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { SessionResult, AnswerRecord } from '../domain/session';
 import { totalScore } from '../domain/scoring';
-import { formatPoints, formatSeconds } from '../domain/format';
+import { formatElapsed, formatPoints, formatSeconds } from '../domain/format';
 import { useI18n } from '../i18n/I18nContext';
 import './ResultsScreen.css';
 
@@ -46,7 +46,9 @@ const ScreenResults = ({ result }: { result: SessionResult }) => {
       <ul className="results__list">
         {result.answers.map((record, i) => {
           const kind = classify(record, result.durationPerQuestionMs);
-          const elapsed = (record.elapsedMs / 1000).toFixed(1);
+          // Rounded up like the running timer (#48): an answer scored slow must
+          // never read as the target or less next to "trop lent".
+          const elapsed = formatElapsed(record.elapsedMs, result.durationPerQuestionMs);
           return (
             <li
               key={i}
