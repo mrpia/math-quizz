@@ -90,16 +90,14 @@ export const SettingsScreen = ({
   const submit = () => {
     onSave({
       ...settings,
-      // Whole milliseconds first, then the grid the timer can show: a typed
-      // 2.255 lands on 2260, the same as an imported 2255 (`TARGET_STEP_MS`).
+      // Snapped to the grid the timer can show (`TARGET_STEP_MS`), the same
+      // way an imported value is.
       durationPerQuestionMs: snapTargetMs(
-        Math.round(
-          clamp(
-            readNumber(seconds, settings.durationPerQuestionMs / 1000),
-            SECONDS_MIN,
-            SECONDS_MAX,
-          ) * 1000,
-        ),
+        clamp(
+          readNumber(seconds, settings.durationPerQuestionMs / 1000),
+          SECONDS_MIN,
+          SECONDS_MAX,
+        ) * 1000,
       ),
       questionCount: Math.round(
         clamp(

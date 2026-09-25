@@ -364,6 +364,9 @@ describe('validateBackup — settings are sanitized, not rejected', () => {
     // two hundredths would be applied but never shown. Same as the form.
     expect(withSettings({ durationPerQuestionMs: 2255 }).durationPerQuestionMs).toBe(2260);
     expect(withSettings({ durationPerQuestionMs: 2254.4 }).durationPerQuestionMs).toBe(2250);
+    // Whole ms first, so 2254.9 lands where the form's "2.2549" does.
+    expect(withSettings({ durationPerQuestionMs: 2254.9 }).durationPerQuestionMs).toBe(2260);
+    expect(withSettings({ durationPerQuestionMs: 2.255 * 1000 }).durationPerQuestionMs).toBe(2260);
     expect(withSettings({ durationPerQuestionMs: 2250 }).durationPerQuestionMs).toBe(2250);
     expect(withSettings({ durationPerQuestionMs: 6500 }).durationPerQuestionMs).toBe(6500);
   });

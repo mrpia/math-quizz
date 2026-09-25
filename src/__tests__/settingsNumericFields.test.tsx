@@ -102,6 +102,9 @@ describe('SettingsScreen numeric fields', () => {
     expect(save().durationPerQuestionMs).toBe(2260);
     fireEvent.change(targetTime(), { target: { value: '2.254' } });
     expect(save().durationPerQuestionMs).toBe(2250);
+    // Sub-millisecond input rounds to whole ms first, as an import does.
+    fireEvent.change(targetTime(), { target: { value: '2.2549' } });
+    expect(save().durationPerQuestionMs).toBe(2260);
     fireEvent.change(targetTime(), { target: { value: '2.25' } });
     expect(save().durationPerQuestionMs).toBe(2250);
   });
