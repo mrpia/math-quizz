@@ -25,6 +25,7 @@ export const TrickiestPairsList = ({ pairs }: Props) => {
           <span className="pairs__barwrap">
             <span
               className={`pairs__bar heat--${rateBucket(p.errorRate)}`}
+              data-testid="pair-bar"
               style={{ width: `${Math.round((p.errorRate / maxRate) * 100)}%` }}
             />
           </span>
