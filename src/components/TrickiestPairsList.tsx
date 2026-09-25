@@ -28,7 +28,7 @@ export const TrickiestPairsList = ({ pairs }: Props) => {
               style={{ width: `${Math.round((p.errorRate / maxRate) * 100)}%` }}
             />
           </span>
-          <span className="pairs__num">
+          <span className="pairs__num" data-testid="pair-count">
             {formatPairCount(p.failures, p.attempts, p.slow)}
           </span>
         </li>

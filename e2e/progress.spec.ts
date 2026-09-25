@@ -28,7 +28,7 @@ test('a pair count with a slow-answer suffix stays on one line', async ({ page }
   await page.goto('/');
   await page.getByTestId('open-progress').click();
 
-  const count = page.getByTestId('trickiest-pairs').locator('.pairs__num').first();
+  const count = page.getByTestId('pair-count').first();
   await expect(count).toHaveText(/🐢/);
 
   // A range over the text gets one rect per line fragment; fragments on one
