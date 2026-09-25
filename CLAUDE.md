@@ -26,7 +26,9 @@ three together in the same commit:
 2. **`CHANGELOG.md`** — contributor-facing, **English**, in
    [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format
    (`## [x.y.z] - YYYY-MM-DD` with `### Added` / `### Changed` / `### Fixed`).
-   Technical detail is welcome here.
+   Technical detail is welcome here. Also add the version's compare link at the
+   bottom, `[x.y.z]: https://github.com/mrpia/math-quizz/compare/vPREV...vx.y.z`,
+   and move `[Unreleased]` to compare from the new tag to `HEAD`.
 
 3. **`src/domain/releaseNotes.ts`** — user-facing, child-friendly, shown in-app
    on the À propos screen. Prepend a new
@@ -45,7 +47,26 @@ version in `package.json`:
 
 So forgetting the changelog entry, or any of the three language notes, on a bump
 makes `pnpm test` fail. The `CHANGELOG.md` check is intentionally loose — it
-only verifies the section header exists, not its contents.
+only verifies the section header exists, not its contents. Nothing checks the
+compare link either; a missing one only leaves the heading as plain text.
+
+**After the release PR merges, tag it.** Every released version has an
+annotated `vX.Y.Z` tag on the commit that set that version in `package.json`
+(the `chore(release)` commit), and a GitHub Release whose body is that
+version's `CHANGELOG.md` section:
+
+```sh
+git switch main && git pull
+git tag -a vX.Y.Z -m "math-quizz X.Y.Z" <release-commit>
+git push origin vX.Y.Z
+gh release create vX.Y.Z --verify-tag --title "math-quizz X.Y.Z" --notes-file <section.md>
+```
+
+Tag only once the PR is merged. PRs land as merge commits, so the release
+commit keeps its SHA on `main`; a tag made on the branch before a squash or
+rebase merge would point at a commit `main` never contains. Tags are plain
+`vX.Y.Z`: `release/x.y.z` is the branch name, and the compare links above
+assume the `v` form.
 
 ## Profiles: the id is always an argument
 
