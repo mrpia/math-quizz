@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { SessionResult, AnswerRecord } from '../domain/session';
-import { totalScore } from '../domain/scoring';
+import { outcomeOf, totalScore } from '../domain/scoring';
+import type { Outcome } from '../domain/scoring';
 import { formatElapsed, formatPoints, formatSeconds } from '../domain/format';
 import { useI18n } from '../i18n/I18nContext';
 import './ResultsScreen.css';
@@ -11,8 +12,6 @@ type Props = {
   onHome: () => void;
 };
 
-type Kind = 'ok' | 'slow' | 'wrong' | 'timeout';
-
 const renderOperation = (record: AnswerRecord): string => {
   const { question } = record;
   if (question.op === 'mul') {
@@ -21,19 +20,15 @@ const renderOperation = (record: AnswerRecord): string => {
   return `${question.a * question.b} ÷ ${question.a} = ${question.expected}`;
 };
 
-const classify = (record: AnswerRecord, targetMs: number): Kind => {
-  // Legacy only: no current mode stores a screen answer without a value.
-  if (record.given === null) return 'timeout';
-  if (record.given !== record.question.expected) return 'wrong';
-  return record.elapsedMs <= targetMs ? 'ok' : 'slow';
-};
-
-const ICON: Record<Kind, string> = {
-  ok: '✅',
+const ICON: Record<Outcome, string> = {
+  correct: '✅',
   slow: '🟡',
   wrong: '❌',
   timeout: '⏰',
 };
+
+// The CSS modifier and the test id predate `Outcome` and say "ok" for correct.
+const rowKind = (outcome: Outcome): string => (outcome === 'correct' ? 'ok' : outcome);
 
 const ScreenResults = ({ result }: { result: SessionResult }) => {
   const { t } = useI18n();
@@ -45,7 +40,8 @@ const ScreenResults = ({ result }: { result: SessionResult }) => {
       </p>
       <ul className="results__list">
         {result.answers.map((record, i) => {
-          const kind = classify(record, result.durationPerQuestionMs);
+          const outcome = outcomeOf(record, result.durationPerQuestionMs);
+          const kind = rowKind(outcome);
           // Rounded up like the running timer (#48): an answer scored slow must
           // never read as the target or less next to "trop lent".
           const elapsed = formatElapsed(record.elapsedMs, result.durationPerQuestionMs);
@@ -56,18 +52,18 @@ const ScreenResults = ({ result }: { result: SessionResult }) => {
               data-testid={`results-row-${kind}`}
             >
               <span className="results__icon" aria-hidden>
-                {ICON[kind]}
+                {ICON[outcome]}
               </span>
               <span className="results__operation">{renderOperation(record)}</span>
               <span className="results__detail">
-                {kind === 'ok' && <>{elapsed}s</>}
-                {kind === 'slow' && <>{elapsed}s · {t('results.slow')}</>}
-                {kind === 'wrong' && (
+                {outcome === 'correct' && <>{elapsed}s</>}
+                {outcome === 'slow' && <>{elapsed}s · {t('results.slow')}</>}
+                {outcome === 'wrong' && (
                   <>
                     {elapsed}s · {t('results.wrongAnswer', { given: record.given ?? '' })}
                   </>
                 )}
-                {kind === 'timeout' && <>{t('results.noAnswer')}</>}
+                {outcome === 'timeout' && <>{t('results.noAnswer')}</>}
               </span>
             </li>
           );
