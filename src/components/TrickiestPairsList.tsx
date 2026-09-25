@@ -29,7 +29,7 @@ export const TrickiestPairsList = ({ pairs }: Props) => {
             />
           </span>
           <span className="pairs__num">
-            {formatPairCount(p.errors + p.timeouts, p.attempts, p.slow)}
+            {formatPairCount(p.failures, p.attempts, p.slow)}
           </span>
         </li>
       ))}
