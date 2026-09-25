@@ -116,7 +116,8 @@ test('a downloaded backup can be merged back in, matching on the ids it carries'
   // First merge: both sessions from the file are new here.
   await page.getByTestId('backup-import').setInputFiles(file);
   await page.getByTestId('import-mode-merge').click();
-  await expect(page.getByTestId('import-merge-summary')).toHaveText(/2.*0/);
+  // Exactly the two numbers, in this order: 2 new, 0 already here.
+  await expect(page.getByTestId('import-merge-summary')).toHaveText(/^\D*2\D+0\D*$/);
   await page.getByTestId('import-confirm').click();
   // Sorted by startedAt; the ids came through the file untouched, and the
   // legacy session is still without one.
@@ -125,7 +126,7 @@ test('a downloaded backup can be merged back in, matching on the ids it carries'
   // Same file again: nothing new, matched on the id and on startedAt.
   await page.getByTestId('backup-import').setInputFiles(file);
   await page.getByTestId('import-mode-merge').click();
-  await expect(page.getByTestId('import-merge-summary')).toHaveText(/0.*2/);
+  await expect(page.getByTestId('import-merge-summary')).toHaveText(/^\D*0\D+2\D*$/);
   await page.getByTestId('import-confirm').click();
   expect(await storedIds()).toEqual([null, 'a'.repeat(32), 'b'.repeat(32)]);
 });
