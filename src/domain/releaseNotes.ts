@@ -21,6 +21,21 @@ export type ReleaseNote = {
 /** Newest first. */
 export const releaseNotes: ReleaseNote[] = [
   {
+    version: '1.2.1',
+    date: '2026-09-25',
+    changes: {
+      fr: [
+        "Dans le « Bilan », une réponse fausse est maintenant barrée en rouge, avec la bonne réponse écrite juste à côté. Avant, le ❌ était à côté du bon calcul, et on pouvait croire que c'était lui qui était faux.",
+      ],
+      de: [
+        'In der « Bilanz » ist eine falsche Antwort jetzt rot durchgestrichen, und die richtige steht gleich daneben. Vorher stand das ❌ neben der richtigen Rechnung, und man konnte meinen, sie sei falsch.',
+      ],
+      en: [
+        'In the "Summary", a wrong answer is now crossed out in red, with the right one written right next to it. Before, the ❌ sat next to the right sum, so it looked like that sum was the wrong one.',
+      ],
+    },
+  },
+  {
     version: '1.2.0',
     date: '2026-09-25',
     changes: {
