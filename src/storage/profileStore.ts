@@ -72,17 +72,21 @@ export const loadHistory = (profileId: string): SessionResult[] =>
     [] as SessionResult[],
   );
 
-export const appendSession = (profileId: string, session: SessionResult): void => {
+// Not exported on purpose: this is the one write that does not stamp an id,
+// and a screen reaching for it would store sessions a merge can only match by
+// luck. `recordSession` is the way in.
+const appendSession = (profileId: string, session: SessionResult): void => {
   const next = [...loadHistory(profileId), session].slice(-HISTORY_LIMIT);
   localStorage.setItem(storageKeys(profileId).history, JSON.stringify(next));
 };
 
 /**
  * The moment a session gets its id (#18). Only here, never on load or import:
- * a session stored without one keeps matching on `startedAt` instead.
+ * a session stored without one keeps matching on `startedAt` instead. The id
+ * is spread last, so a caller passing `id: undefined` by hand still gets one.
  */
 const stamped = (session: SessionResult): SessionResult =>
-  session.id === undefined ? { id: newSessionId(), ...session } : session;
+  session.id === undefined ? { ...session, id: newSessionId() } : session;
 
 export const recordSession = (profileId: string, session: SessionResult): void => {
   appendSession(profileId, stamped(session));
