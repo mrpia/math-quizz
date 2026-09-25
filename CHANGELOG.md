@@ -7,6 +7,17 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **A wrong answer on the Bilan no longer looks like a wrong equation.** The ❌
+  sat beside the bold right equation (`7 × 8 = 56`), and the child's answer
+  followed in muted grey as "réponse : 54", which read as the right one. The
+  row now corrects in place, `7 × 8 = ~~54~~ 56`: the child's answer
+  struck through in red, the right one after it in full ink (not
+  `--color-success`, which is ~2.3:1 on white). The detail column keeps only the
+  time. Applies to screen and training summaries. Strikethrough is rarely
+  announced, so a visually hidden sentence (`results.wrongAnswerSpoken`)
+  replaces `results.wrongAnswer` for screen readers.
+
 ## [1.2.0] - 2026-09-25
 
 ### Added

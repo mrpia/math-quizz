@@ -67,7 +67,7 @@ describe('ResultsScreen — training summary', () => {
     render(<ResultsScreen result={trainingResult} onReplay={noop} onHome={noop} />);
     expect(screen.getByText('1 / 2')).toBeInTheDocument();
     expect(screen.getByText('7 × 8 = 56')).toBeInTheDocument();
-    expect(screen.getByText('6 × 9 = 54')).toBeInTheDocument();
+    expect(screen.getByText(/la bonne réponse est 54/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Enregistrer/ })).toBeNull();
     // Untimed: the correct-but-slow answer is not flagged as "trop lent".
     expect(screen.queryByText(/trop lent/)).toBeNull();
@@ -79,6 +79,49 @@ describe('ResultsScreen — screen mode unchanged', () => {
     render(<ResultsScreen result={screenResult} onReplay={noop} onHome={noop} />);
     expect(screen.getByText('1 / 2')).toBeInTheDocument(); // 56 ok, 50 wrong
     expect(screen.queryByRole('button', { name: /Enregistrer/ })).toBeNull();
+  });
+});
+
+describe('ResultsScreen — a wrong row corrects the answer in place', () => {
+  // A ❌ beside the bold right equation read as "7 × 8 = 56 is wrong", and a
+  // muted "réponse : 54" read as the right answer. The child's answer now sits
+  // where the answer goes, crossed out, with the right one after it.
+  const expectCorrection = (row: HTMLElement, given: string, expected: string) => {
+    expect(row.querySelector('del')).toHaveTextContent(given);
+    expect(row.querySelector('ins')).toHaveTextContent(expected);
+    expect(row).not.toHaveTextContent(/réponse :/);
+  };
+
+  test('screen mode: crossed-out answer, then the right one, and only the time beside', () => {
+    render(<ResultsScreen result={screenResult} onReplay={noop} onHome={noop} />);
+    const row = screen.getByTestId('results-row-wrong');
+    expectCorrection(row, '50', '54');
+    expect(row.querySelector('.results__detail')).toHaveTextContent(/^2\.0s$/);
+  });
+
+  test('screen mode: says it in words, since strikethrough is not announced', () => {
+    render(<ResultsScreen result={screenResult} onReplay={noop} onHome={noop} />);
+    expect(
+      screen.getByText('6 × 9 : tu as répondu 50, la bonne réponse est 54'),
+    ).toBeInTheDocument();
+  });
+
+  test('a division row keeps its prompt', () => {
+    const div: SessionResult = {
+      ...screenResult,
+      questionCount: 1,
+      answers: [{ question: { a: 7, b: 8, op: 'div', expected: 8 }, given: 9, elapsedMs: 1000 }],
+    };
+    render(<ResultsScreen result={div} onReplay={noop} onHome={noop} />);
+    const row = screen.getByTestId('results-row-wrong');
+    expect(row).toHaveTextContent('56 ÷ 7 =');
+    expectCorrection(row, '9', '8');
+  });
+
+  test('training mode corrects the same way', () => {
+    render(<ResultsScreen result={trainingResult} onReplay={noop} onHome={noop} />);
+    const row = screen.getByText(/tu as répondu 50/).closest('li')!;
+    expectCorrection(row, '50', '54');
   });
 });
 

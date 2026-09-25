@@ -54,7 +54,7 @@ export const de: Record<TranslationKey, string> = {
   'results.title': 'Bilanz',
   'results.legend': 'Ziel: {seconds}s — langsamere Antwort: {points} Pkt',
   'results.slow': 'zu langsam',
-  'results.wrongAnswer': 'Antwort: {given}',
+  'results.wrongAnswerSpoken': '{operation}: Du hast {given} geantwortet, die richtige Antwort ist {expected}',
   'results.noAnswer': 'keine Antwort',
   'results.paperLegend':
     'Vergleiche mit deinem Blatt und entferne ❌ bei den falschen Antworten.',
