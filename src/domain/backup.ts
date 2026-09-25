@@ -25,6 +25,7 @@
 import { DEFAULT_SETTINGS, SETTINGS_BOUNDS, snapTargetMs } from './session';
 import type { AdaptiveDraw, AnswerMode, AnswerRecord, SessionResult, Settings } from './session';
 import { expectedAnswer } from './question';
+import { canonicalKey } from './stats';
 import type { Mode, Operator, Question } from './question';
 import { SITE_URL } from '../config/site';
 import { MULTIPLICANDS, MULTIPLIERS } from './tables';
@@ -334,9 +335,7 @@ export const summarizeBackup = (backup: Backup) => {
   const pairs = new Set<string>();
   for (const session of [...backup.data.history, ...backup.data.trainingHistory]) {
     for (const { question } of session.answers) {
-      const lo = Math.min(question.a, question.b);
-      const hi = Math.max(question.a, question.b);
-      pairs.add(`${lo}x${hi}`);
+      pairs.add(canonicalKey(question.a, question.b));
     }
   }
   return {
