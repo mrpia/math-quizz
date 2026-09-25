@@ -279,10 +279,12 @@ histories; the user-facing `Settings` object is preserved.
 
 **Settings → Tes données** writes one profile to one JSON file and reads it back
 — the only backup an app with no backend can offer, and the way to move a
-history between devices. Import replaces the destination profile (it does not
-merge) behind a confirmation dialog that asks *which* profile to overwrite. The
-registry is not part of the file, so importing never creates, renames or removes
-a profile.
+history between devices. The import dialog asks *which* profile the file lands
+in and whether it **replaces** that profile (a restore: settings and both
+histories become the file's) or is **added** to it (a merge: sessions the
+profile already holds are skipped, the rest are sorted in, the destination's
+settings stay). The registry is not part of the file, so importing never
+creates, renames or removes a profile.
 
 The file format is a published contract, not an internal detail:
 
