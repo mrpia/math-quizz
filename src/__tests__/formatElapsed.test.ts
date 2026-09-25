@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { formatElapsed } from '../domain/format';
+import { SETTINGS_BOUNDS, TARGET_STEP_MS, snapTargetMs } from '../domain/session';
 
 describe('formatElapsed', () => {
   test('starts at zero with one decimal', () => {
@@ -29,6 +30,19 @@ describe('formatElapsed', () => {
   test('display exceeds the target exactly when the answer would be scored slow', () => {
     for (const target of [1000, 2250, 2500, 4000]) {
       for (let ms = target - 150; ms <= target + 150; ms += 0.5) {
+        const shownMs = Number(formatElapsed(ms, target)) * 1000;
+        expect(shownMs > target).toBe(ms > target);
+      }
+    }
+  });
+
+  test('...for every target the app can store, i.e. every step of the grid', () => {
+    // A target off the grid (2255) breaks this: "2.26" for a fast 2251 ms.
+    // Settings and the importer snap to the grid, so none is ever stored.
+    expect(snapTargetMs(2255)).toBe(2260);
+    const { min } = SETTINGS_BOUNDS.durationPerQuestionMs;
+    for (let target = min; target <= min + 3000; target += TARGET_STEP_MS) {
+      for (let ms = target - 30; ms <= target + 30; ms += 1) {
         const shownMs = Number(formatElapsed(ms, target)) * 1000;
         expect(shownMs > target).toBe(ms > target);
       }

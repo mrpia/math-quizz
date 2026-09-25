@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ChangeEvent } from 'react';
-import { SETTINGS_BOUNDS } from '../domain/session';
+import { SETTINGS_BOUNDS, snapTargetMs } from '../domain/session';
 import type { Settings } from '../domain/session';
 import {
   BACKUP_SCHEMA_URL,
@@ -99,12 +99,16 @@ export const SettingsScreen = ({
   const submit = () => {
     onSave({
       ...settings,
-      durationPerQuestionMs: Math.round(
-        clamp(
-          readNumber(seconds, settings.durationPerQuestionMs / 1000),
-          SECONDS_MIN,
-          SECONDS_MAX,
-        ) * 1000,
+      // Whole milliseconds first, then the grid the timer can show: a typed
+      // 2.255 lands on 2260, the same as an imported 2255 (`TARGET_STEP_MS`).
+      durationPerQuestionMs: snapTargetMs(
+        Math.round(
+          clamp(
+            readNumber(seconds, settings.durationPerQuestionMs / 1000),
+            SECONDS_MIN,
+            SECONDS_MAX,
+          ) * 1000,
+        ),
       ),
       questionCount: Math.round(
         clamp(

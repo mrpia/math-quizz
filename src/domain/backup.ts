@@ -22,7 +22,7 @@
  *   (#46), so the two ways in cannot drift. Notably `selectedTables` can
  *   never end up empty: `generateQuestions` throws on an empty selection.
  */
-import { DEFAULT_SETTINGS, SETTINGS_BOUNDS } from './session';
+import { DEFAULT_SETTINGS, SETTINGS_BOUNDS, snapTargetMs } from './session';
 import type { AdaptiveDraw, AnswerMode, AnswerRecord, SessionResult, Settings } from './session';
 import { expectedAnswer } from './question';
 import type { Mode, Operator, Question } from './question';
@@ -229,10 +229,13 @@ const readTables = (value: unknown): number[] => {
 export const sanitizeSettings = (value: unknown): Settings => {
   const raw = isRecord(value) ? value : {};
   return {
-    durationPerQuestionMs: readNumber(
-      raw.durationPerQuestionMs,
-      SETTINGS_BOUNDS.durationPerQuestionMs,
-      DEFAULT_SETTINGS.durationPerQuestionMs,
+    // Snapped to the grid the timer can show; see `TARGET_STEP_MS`.
+    durationPerQuestionMs: snapTargetMs(
+      readNumber(
+        raw.durationPerQuestionMs,
+        SETTINGS_BOUNDS.durationPerQuestionMs,
+        DEFAULT_SETTINGS.durationPerQuestionMs,
+      ),
     ),
     questionCount: Math.round(
       readNumber(

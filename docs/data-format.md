@@ -175,8 +175,11 @@ Structure and settings are handled by deliberately different rules:
   progress screen.
 - **Settings are sanitised, never rejected.** Every setting has a safe default,
   so an out-of-range number is clamped to the range the Settings form accepts
-  and an unknown enum value falls back to the default. `selectedTables` can
-  never end up empty — question generation throws on an empty selection.
+  and an unknown enum value falls back to the default. `durationPerQuestionMs`
+  is also rounded to a multiple of 10 ms, the finest step the timer and the
+  target labels show, so a `2255` is applied as `2260` rather than scored
+  against a number the child never sees. `selectedTables` can never end up
+  empty — question generation throws on an empty selection.
 
 Unknown fields in the envelope are dropped on import. A `history` longer than 50
 imports fine but is trimmed to the newest 50, the same cap the app applies to

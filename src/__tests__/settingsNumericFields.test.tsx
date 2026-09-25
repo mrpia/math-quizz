@@ -94,6 +94,18 @@ describe('SettingsScreen numeric fields', () => {
     });
   });
 
+  it('snaps the target to the 10 ms grid the timer can show', () => {
+    // 2.255 s would be scored against a number no label shows: "cible 2.25s"
+    // while 2.251 s still counted as fast. Same result as an imported 2255.
+    const { save } = renderSettings();
+    fireEvent.change(targetTime(), { target: { value: '2.255' } });
+    expect(save().durationPerQuestionMs).toBe(2260);
+    fireEvent.change(targetTime(), { target: { value: '2.254' } });
+    expect(save().durationPerQuestionMs).toBe(2250);
+    fireEvent.change(targetTime(), { target: { value: '2.25' } });
+    expect(save().durationPerQuestionMs).toBe(2250);
+  });
+
   it('still clamps an out-of-range number', () => {
     const { save } = renderSettings();
     fireEvent.change(targetTime(), { target: { value: '400' } });

@@ -65,7 +65,7 @@
       "type": "object",
       "properties": {
         "durationPerQuestionMs": {
-          "description": "Target answer time in milliseconds. Answering within it earns a full point; slower but correct earns partialCreditFactor. Clamped to 1000–60000 on import.",
+          "description": "Target answer time in milliseconds. Answering within it earns a full point; slower but correct earns partialCreditFactor. Clamped to 1000–60000 and rounded to a multiple of 10 on import, the finest step the timer shows.",
           "type": "number",
           "minimum": 1000,
           "maximum": 60000

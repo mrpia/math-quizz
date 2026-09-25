@@ -359,6 +359,15 @@ describe('validateBackup — settings are sanitized, not rejected', () => {
     expect(s.partialCreditFactor).toBe(1);
   });
 
+  it('snaps the target time to the 10 ms grid the timer can show', () => {
+    // The timer and the labels show hundredths at most, so a target between
+    // two hundredths would be applied but never shown. Same as the form.
+    expect(withSettings({ durationPerQuestionMs: 2255 }).durationPerQuestionMs).toBe(2260);
+    expect(withSettings({ durationPerQuestionMs: 2254.4 }).durationPerQuestionMs).toBe(2250);
+    expect(withSettings({ durationPerQuestionMs: 2250 }).durationPerQuestionMs).toBe(2250);
+    expect(withSettings({ durationPerQuestionMs: 6500 }).durationPerQuestionMs).toBe(6500);
+  });
+
   it('keeps a settings blob that is not an object from breaking the import', () => {
     expect(withSettings('nope')).toEqual(DEFAULT_SETTINGS);
   });
