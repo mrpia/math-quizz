@@ -108,10 +108,19 @@ export const en: Record<TranslationKey, string> = {
   'settings.export': 'Export my data',
   'settings.exportDone': 'File exported',
   'settings.import': 'Import a file',
-  'settings.importConfirm': 'Replace your data with this file?',
+  'settings.importConfirm': 'Import this file?',
   'settings.importSummary': 'Tests: {sessions} · Training: {training} · Pairs: {pairs}',
   'settings.importWarning':
     'The settings and results of "{name}" will be replaced.',
+  'settings.importMode': 'What about your current results?',
+  'settings.importModeReplace': 'Replace',
+  'settings.importModeMerge': 'Add',
+  'settings.importMergeWarning':
+    'The results in this file are added to those of "{name}". Its settings stay as they are.',
+  'settings.importMergeSummary': 'New sessions: {added} · Already here: {known}',
+  'settings.importMergeDropped':
+    'At most {limit} tests and {limit} training sessions are kept. Removed because older: {dropped}',
+  'settings.mergeDone': 'Results added',
   'settings.importYes': 'Yes, import',
   'settings.importDone': 'Data imported',
   'settings.importErrorUnreadable': "This file can't be read.",

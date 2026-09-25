@@ -134,6 +134,15 @@ describe('validateBackup — sessions', () => {
     expect(ok(withHistory([session(1)])).data.history).toEqual([session(1)]);
   });
 
+  it('keeps a session id (#18), so a merge can match on it', () => {
+    const withId = { ...session(1), id: '0123abcd' };
+    expect(ok(withHistory([withId])).data.history[0].id).toBe('0123abcd');
+  });
+
+  it('accepts a session with no id — every file before 1.2.0', () => {
+    expect(ok(withHistory([session(1)])).data.history[0]).not.toHaveProperty('id');
+  });
+
   it('accepts a legacy session with no answerMode', () => {
     const { answerMode: _drop, ...legacy } = session(1);
     expect(ok(withHistory([legacy])).data.history[0].answerMode).toBeUndefined();
@@ -152,6 +161,8 @@ describe('validateBackup — sessions', () => {
     ['history is not an array', 'not-an-array'],
     ['a session is not an object', [null]],
     ['startedAt is missing', [{ ...session(1), startedAt: undefined }]],
+    ['the id is not a string', [{ ...session(1), id: 42 }]],
+    ['the id is empty', [{ ...session(1), id: '' }]],
     ['answers is not an array', [{ ...session(1), answers: {} }]],
     ['an answer has no question', [{ ...session(1), answers: [{ given: 1, elapsedMs: 1 }] }]],
     [
@@ -399,6 +410,15 @@ describe('published JSON Schema (drift guard)', () => {
     const { a, b } = schema.$defs.question.properties;
     expect(a.enum).toEqual([...MULTIPLICANDS]);
     expect(b.enum).toEqual([...MULTIPLIERS]);
+  });
+
+  it('declares the session id as an optional, documented string (#18)', () => {
+    const { sessionResult } = schema.$defs;
+    expect(sessionResult.properties.id).toMatchObject({ type: 'string', minLength: 1 });
+    expect(sessionResult.properties.id.description ?? '').not.toBe('');
+    // Additive: older files carry no id and must keep validating.
+    expect(sessionResult.required).not.toContain('id');
+    expect(schema.properties.formatVersion.const).toBe(1);
   });
 
   it('documents every top-level and data field', () => {

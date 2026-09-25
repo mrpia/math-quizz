@@ -105,6 +105,14 @@ profile the user picks in the dialog. So importing can never create, rename or
 remove a profile, and a file from another device cannot rearrange this device's
 people.
 
+**Import either replaces or merges (#18), and the caller must say which:**
+`importProfile(id, backup, mode)` has no default for `mode`. A merge keeps the
+destination's settings and goes through `domain/merge.ts`: dedupe on
+`sessionKey`, sort by `startedAt` (weights are positional), trim to
+`HISTORY_LIMIT`. Session ids are stamped only in `recordSession` /
+`recordTrainingSession`. Never backfill one on load or import, because the same
+old session would get a different id on each device and stop matching.
+
 Two validation policies, deliberately different — don't "simplify" them into
 one: **structure is rejected** (a malformed session or a non-canonical error key
 fails the whole file, because a partial history that looks complete is worse than

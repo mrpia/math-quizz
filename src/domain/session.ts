@@ -25,6 +25,14 @@ export type AnswerRecord = {
 };
 
 export type SessionResult = {
+  /**
+   * Opaque and random, stamped when the session is recorded (#18), so a merge
+   * can tell two devices' sessions apart even when they share a `startedAt`.
+   * Absent on sessions recorded before 1.2.0, and never backfilled: a random
+   * id given to the same old session on two devices would make the copies
+   * look different. Those match on `startedAt` plus answer count instead.
+   */
+  id?: string;
   startedAt: string;
   durationPerQuestionMs: number;
   partialCreditFactor: number;
@@ -77,3 +85,13 @@ export const DEFAULT_SETTINGS: Settings = {
   language: 'fr',
   adaptiveDraw: 'moderate',
 };
+
+/**
+ * 128 random bits, hex. Built on `getRandomValues` rather than
+ * `crypto.randomUUID`, which only exists in a secure context and would be
+ * missing when the dev server is opened from a tablet over the LAN.
+ */
+export const newSessionId = (): string =>
+  Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) =>
+    byte.toString(16).padStart(2, '0'),
+  ).join('');

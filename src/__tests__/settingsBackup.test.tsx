@@ -57,6 +57,7 @@ const renderScreen = (over: Partial<Parameters<typeof SettingsScreen>[0]> = {}) 
     onClearHistory: vi.fn(),
     onExport: vi.fn(() => backup),
     onImport: vi.fn(),
+    onPreviewMerge: vi.fn(() => ({ added: 0, known: 0, dropped: 0 })),
     onBack: vi.fn(),
     ...over,
   };
@@ -126,7 +127,7 @@ describe('SettingsScreen — import', () => {
     const props = renderScreen();
     uploadJson(serializeBackup(backup));
 
-    await screen.findByText(/remplacer tes données/i);
+    await screen.findByText(/importer ce fichier ?/i);
     expect(
       screen.getByText(/tests\s*:\s*1.*entraînements\s*:\s*1.*paires\s*:\s*1/i),
     ).toBeInTheDocument();
@@ -136,6 +137,7 @@ describe('SettingsScreen — import', () => {
     expect(props.onImport).toHaveBeenCalledWith(
       'default',
       expect.objectContaining({ format: BACKUP_FORMAT }),
+      'replace',
     );
     await screen.findByText(/données importées/i);
   });
@@ -164,7 +166,7 @@ describe('SettingsScreen — import', () => {
       },
     );
     uploadJson(serializeBackup(imported));
-    await screen.findByText(/remplacer tes données/i);
+    await screen.findByText(/importer ce fichier ?/i);
     fireEvent.click(screen.getByRole('button', { name: /oui, importer/i }));
 
     expect(screen.getByLabelText(/nombre de questions/i)).toHaveValue(33);
@@ -185,12 +187,12 @@ describe('SettingsScreen — import', () => {
     const props = renderScreen();
     uploadJson(serializeBackup(backup));
 
-    await screen.findByText(/remplacer tes données/i);
+    await screen.findByText(/importer ce fichier ?/i);
     fireEvent.click(screen.getByRole('button', { name: /^annuler$/i }));
 
     expect(props.onImport).not.toHaveBeenCalled();
     await waitFor(() =>
-      expect(screen.queryByText(/remplacer tes données/i)).not.toBeInTheDocument(),
+      expect(screen.queryByText(/importer ce fichier ?/i)).not.toBeInTheDocument(),
     );
   });
 
@@ -213,7 +215,7 @@ describe('SettingsScreen — import', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message);
     expect(props.onImport).not.toHaveBeenCalled();
-    expect(screen.queryByText(/remplacer tes données/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/importer ce fichier ?/i)).not.toBeInTheDocument();
   });
 
   it('surfaces a storage failure instead of pretending the import worked', async () => {
@@ -223,7 +225,7 @@ describe('SettingsScreen — import', () => {
     renderScreen({ onImport });
     uploadJson(serializeBackup(backup));
 
-    await screen.findByText(/remplacer tes données/i);
+    await screen.findByText(/importer ce fichier ?/i);
     fireEvent.click(screen.getByRole('button', { name: /oui, importer/i }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/mémoire du navigateur/i);
@@ -245,7 +247,7 @@ describe('SettingsScreen — choosing where an import lands', () => {
     uploadJson(serializeBackup(backup));
 
     return waitFor(() => {
-      expect(screen.getByText(/remplacer tes données/i)).toBeInTheDocument();
+      expect(screen.getByText(/importer ce fichier ?/i)).toBeInTheDocument();
       expect(screen.queryByLabelText(/importer dans le profil/i)).toBeNull();
     });
   });
@@ -295,9 +297,11 @@ describe('SettingsScreen — choosing where an import lands', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /oui, importer/i }));
 
-    expect(props.onImport).toHaveBeenCalledWith('p2', expect.objectContaining({
-      format: BACKUP_FORMAT,
-    }));
+    expect(props.onImport).toHaveBeenCalledWith(
+      'p2',
+      expect.objectContaining({ format: BACKUP_FORMAT }),
+      'replace',
+    );
   });
 
   it('leaves the open form alone when the file lands in another profile', async () => {
@@ -322,6 +326,122 @@ describe('SettingsScreen — choosing where an import lands', () => {
     fireEvent.click(screen.getByRole('button', { name: /oui, importer/i }));
 
     expect(screen.getByLabelText(/nombre de questions/i)).toHaveValue(11);
+  });
+});
+
+describe('SettingsScreen — replace or merge (#18)', () => {
+  const pickMerge = async () => {
+    fireEvent.click(await screen.findByRole('radio', { name: /^ajouter$/i }));
+  };
+
+  it('starts on replace, the restore it has always been', async () => {
+    renderScreen();
+    uploadJson(serializeBackup(backup));
+    expect(await screen.findByRole('radio', { name: /^remplacer$/i })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(screen.getByRole('radio', { name: /^ajouter$/i })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+  });
+
+  it('says what a merge adds and what is already here, measured on the target', async () => {
+    const onPreviewMerge = vi.fn(() => ({ added: 4, known: 2, dropped: 0 }));
+    renderScreen({ onPreviewMerge });
+    uploadJson(serializeBackup(backup));
+    await pickMerge();
+
+    expect(screen.getByText(/nouvelles sessions\s*:\s*4.*déjà là\s*:\s*2/i)).toBeInTheDocument();
+    expect(onPreviewMerge).toHaveBeenCalledWith(
+      'default',
+      expect.objectContaining({ format: BACKUP_FORMAT }),
+    );
+    expect(screen.getByText(/s'ajoutent à ceux de/i)).toBeInTheDocument();
+    expect(screen.queryByText(/seront remplacés/i)).not.toBeInTheDocument();
+  });
+
+  it('warns when the cap will push sessions out, instead of implying all were kept', async () => {
+    renderScreen({ onPreviewMerge: vi.fn(() => ({ added: 5, known: 0, dropped: 3 })) });
+    uploadJson(serializeBackup(backup));
+    await pickMerge();
+
+    expect(screen.getByText(/au plus 50 tests.*plus anciennes\s*:\s*3/i)).toBeInTheDocument();
+  });
+
+  it('stays quiet about the cap when nothing is dropped', async () => {
+    renderScreen({ onPreviewMerge: vi.fn(() => ({ added: 1, known: 0, dropped: 0 })) });
+    uploadJson(serializeBackup(backup));
+    await pickMerge();
+
+    expect(screen.queryByText(/au plus 50 tests/i)).not.toBeInTheDocument();
+  });
+
+  it('passes the chosen mode on, and reports the merge as such', async () => {
+    const props = renderScreen();
+    uploadJson(serializeBackup(backup));
+    await pickMerge();
+    fireEvent.click(screen.getByRole('button', { name: /oui, importer/i }));
+
+    expect(props.onImport).toHaveBeenCalledWith(
+      'default',
+      expect.objectContaining({ format: BACKUP_FORMAT }),
+      'merge',
+    );
+    await screen.findByText(/résultats ajoutés/i);
+  });
+
+  it('leaves the form alone after a merge: the settings were not imported', async () => {
+    // The file carries questionCount 11; a merge keeps the profile's 22.
+    renderScreen({ settings: DEFAULT_SETTINGS });
+    uploadJson(serializeBackup(backup));
+    await pickMerge();
+    fireEvent.click(screen.getByRole('button', { name: /oui, importer/i }));
+
+    expect(screen.getByLabelText(/nombre de questions/i)).toHaveValue(
+      DEFAULT_SETTINGS.questionCount,
+    );
+  });
+
+  it('recounts when the destination changes', async () => {
+    const onPreviewMerge = vi.fn((profileId: string) =>
+      profileId === 'p2'
+        ? { added: 7, known: 0, dropped: 0 }
+        : { added: 1, known: 0, dropped: 0 },
+    );
+    renderScreen({
+      onPreviewMerge,
+      registry: {
+        active: 'default',
+        profiles: [
+          { id: 'default', name: 'Léa', createdAt: '' },
+          { id: 'p2', name: 'Tom', createdAt: '' },
+        ],
+      },
+    });
+    uploadJson(serializeBackup(backup));
+    await pickMerge();
+    fireEvent.change(screen.getByLabelText(/importer dans le profil/i), {
+      target: { value: 'p2' },
+    });
+
+    expect(screen.getByText(/nouvelles sessions\s*:\s*7/i)).toBeInTheDocument();
+    expect(screen.getByText(/ceux de « Tom »/)).toBeInTheDocument();
+  });
+
+  it('a new file starts on replace again', async () => {
+    renderScreen();
+    uploadJson(serializeBackup(backup));
+    await pickMerge();
+    uploadJson(serializeBackup(backup));
+
+    await waitFor(() =>
+      expect(screen.getByRole('radio', { name: /^remplacer$/i })).toHaveAttribute(
+        'aria-checked',
+        'true',
+      ),
+    );
   });
 });
 

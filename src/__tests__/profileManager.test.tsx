@@ -71,6 +71,7 @@ const renderManager = (initial: ProfileRegistry) => {
         onClearHistory={vi.fn()}
         onExport={onExport}
         onImport={vi.fn()}
+        onPreviewMerge={() => ({ added: 0, known: 0, dropped: 0 })}
         onBack={vi.fn()}
       />
     );

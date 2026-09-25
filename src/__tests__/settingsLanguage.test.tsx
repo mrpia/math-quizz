@@ -35,6 +35,7 @@ describe('SettingsScreen language selector', () => {
         onClearHistory={() => {}}
         onExport={exportStub}
         onImport={() => {}}
+        onPreviewMerge={() => ({ added: 0, known: 0, dropped: 0 })}
         onBack={onBack}
       />,
       'fr',
@@ -54,6 +55,7 @@ describe('SettingsScreen language selector', () => {
         onClearHistory={() => {}}
         onExport={exportStub}
         onImport={() => {}}
+        onPreviewMerge={() => ({ added: 0, known: 0, dropped: 0 })}
         onBack={() => {}}
       />,
       'en',
@@ -72,6 +74,7 @@ describe('SettingsScreen language selector', () => {
         onClearHistory={() => {}}
         onExport={exportStub}
         onImport={() => {}}
+        onPreviewMerge={() => ({ added: 0, known: 0, dropped: 0 })}
         onBack={onBack}
       />,
       'fr',

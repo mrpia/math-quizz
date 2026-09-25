@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://math-quizz.mrpia.ch/schemas/math-quizz-backup-v1.schema.json",
   "title": "Math Quizz backup, format version 1",
-  "description": "A full copy of ONE Math Quizz profile as exported from Settings → Tes données. Since 0.12.0 a device can hold several named profiles (siblings sharing a tablet); a backup covers exactly one of them and carries no list of the others, so importing a file never creates, renames or removes a profile — it overwrites a destination the user picked. Math Quizz is a fully client-side app: this file is the only way its data ever leaves the browser. Everything here is written and read locally; there is no server and no account. Only `format`, `formatVersion` and `data` are required — a third party generating a file may omit any other field, and the app will fill in a sensible default. Any property present must have the type declared here: the importer rejects the whole file on a type error rather than silently dropping records.",
+  "description": "A full copy of ONE Math Quizz profile as exported from Settings → Tes données. Since 0.12.0 a device can hold several named profiles (siblings sharing a tablet); a backup covers exactly one of them and carries no list of the others, so importing a file never creates, renames or removes a profile — it writes into a destination the user picked, either replacing that profile's data or, since 1.2.0, merging the file's sessions into it. Math Quizz is a fully client-side app: this file is the only way its data ever leaves the browser. Everything here is written and read locally; there is no server and no account. Only `format`, `formatVersion` and `data` are required — a third party generating a file may omit any other field, and the app will fill in a sensible default. Any property present must have the type declared here: the importer rejects the whole file on a type error rather than silently dropping records.",
   "type": "object",
   "required": ["format", "formatVersion", "data"],
   "properties": {
@@ -43,7 +43,7 @@
           "$ref": "#/$defs/settings"
         },
         "history": {
-          "description": "Completed timed tests, oldest first, from 'mathquizz:profile:<id>:history'. The app keeps at most the 50 most recent; a longer array imports fine but is trimmed to the newest 50.",
+          "description": "Completed timed tests, oldest first, from 'mathquizz:profile:<id>:history'. The app keeps at most the 50 most recent; a longer array imports fine but is trimmed to the newest 50. A merge import trims the combined history the same way, so it can drop older sessions from either side.",
           "type": "array",
           "items": { "$ref": "#/$defs/sessionResult" }
         },
@@ -118,8 +118,13 @@
         "answers"
       ],
       "properties": {
+        "id": {
+          "description": "Opaque random identifier, written when the session is recorded (since 1.2.0; the app uses 32 lowercase hex characters, but readers should treat it as any non-empty string). It is how a merge import recognises a session it already holds, even when two devices stamped the same startedAt. Sessions recorded by earlier versions have no id and never get one retroactively; a merge matches those on startedAt plus the number of answers instead. An id that is present but not a non-empty string makes the file corrupt. A writer creating new sessions should give each one a fresh id, and must not reuse one for a different session.",
+          "type": "string",
+          "minLength": 1
+        },
         "startedAt": {
-          "description": "When the session began, ISO 8601. Also the sort key and the de-facto identifier of a session.",
+          "description": "When the session began, ISO 8601. The sort key: a merge import re-sorts both histories by it, so a device with a wrong clock files its sessions in the wrong place. For sessions without an id, it is also half of the key a merge matches on.",
           "type": "string"
         },
         "durationPerQuestionMs": {

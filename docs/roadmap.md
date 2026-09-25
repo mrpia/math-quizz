@@ -267,7 +267,7 @@ story for an app that deliberately has no backend.
   the wild keep validating;
 - structure is rejected, settings are sanitised. See `domain/backup.ts` for why
   the two halves are treated differently;
-- import is a restore, not a merge (item 10);
+- import was a restore only until item 10 added a merge mode;
 - since v0.12.0 (item 4) a restore has a *destination*: the import dialog asks
   which profile to overwrite, defaulting to the one in use. The file names its
   source profile but never picks the target.
@@ -276,11 +276,13 @@ story for an app that deliberately has no backend.
 
 ## 10. Merge on import
 
-**Status**: 📋 Planned — tracked as [#18](https://github.com/mrpia/math-quizz/issues/18).
-
-The full write-up (motivation, what is needed, guardrails and the invariants not
-to break) moved to that issue, so there is one place to read and one place to
-update.
+**Status**: ✅ Done, [#18](https://github.com/mrpia/math-quizz/issues/18),
+unreleased. The import dialog offers **Remplacer** / **Ajouter**. Sessions carry
+a random `id` from record time; `domain/merge.ts` dedupes on it (falling back to
+`startedAt` plus answer count for older sessions), sorts by `startedAt` and
+trims to `HISTORY_LIMIT`. The dialog shows what the cap will drop. Merge keeps
+the destination's settings. The rationale is in the issue and in
+`docs/data-format.md`.
 
 ---
 
