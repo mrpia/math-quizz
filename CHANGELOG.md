@@ -7,6 +7,18 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- **jsdom 30.1.1 → 30.1.3** (the test DOM, dev only). Re-resolving jsdom's tree
+  also moves css-tree's `source-map-js` from 1.2.1 to 1.2.2, which clears
+  GHSA-68fv-2mgg-jv7q / CVE-2026-93749 (event-loop DoS from crafted indexed
+  source maps). postcss already had 1.2.2 since the vite 8.3.3 bump. Inside
+  jsdom's tree this also takes `@asamuzakjp/dom-selector` 9 → 10, `data-urls`
+  7 → 8 and `tr46` 6 → 7; every changed package stays within `engines`, and
+  jsdom's own `engines` is unchanged. Unlike the patch refresh in 1.1.0, the
+  range floor moves too (`^30.1.3`), as it did for vite: this is a targeted
+  upgrade, not a refresh. Nothing reaches `dist/`: the production build is
+  byte-identical, and the Vitest output matches test for test.
+
 ## [1.2.1] - 2026-09-25
 
 ### Fixed
