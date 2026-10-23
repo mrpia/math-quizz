@@ -18,6 +18,18 @@ and the project uses [Semantic Versioning](https://semver.org/).
   range floor moves too (`^30.1.3`), as it did for vite: this is a targeted
   upgrade, not a refresh. Nothing reaches `dist/`: the production build is
   byte-identical, and the Vitest output matches test for test.
+- **vitest 5.0.1 → 5.0.3** (the test runner, dev only). This moves
+  `@vitest/mocker` to 5.0.3, which clears GHSA-qxg6-89mg-rqv8 / CVE-2026-112949
+  (code injection via unauthenticated manual mock registration) and
+  GHSA-xp26-3454-mjgp / CVE-2026-112950 (a Windows backslash in a redirect URL
+  slips past the allowlist added for GHSA-82fw-gwwq-j7x9). vitest pins
+  `@vitest/mocker` to its own exact version, so a lockfile refresh could not
+  reach the fix; the vitest range had to move (`^5.0.3`). The same pin takes
+  `@vitest/spy` to 5.0.3 and `why-is-node-running` 2.3.0 → 3.2.1, which drops
+  `siginfo` and `stackback`; all stay within `engines`. Stopped at 5.0.3, the
+  first fixed release: 5.0.4 turns on `fsModuleCache` by default and takes
+  `obug` 2 → 3, which is a separate upgrade. Nothing reaches `dist/`: the
+  production build is byte-identical, and the same 501 tests pass by name.
 
 ## [1.2.1] - 2026-09-25
 
