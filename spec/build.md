@@ -8,7 +8,7 @@ Status marks are prose only: 🟠 ACTIVE · 🔴 PLANNED · 🟢 PROVEN · ⚪ D
 
 ## TRACK
 
-- Engine and models: engine `pi`, provider `openroute`, model `claude-sonnet-5-5`. Workers run at `high` reasoning; coordination runs at `xhigh`.
+- Engine and models: engine `pi`, provider `openrouter`, model `anthropic/claude-sonnet-5.5`. Workers run at `high` reasoning; coordination runs at `xhigh`.
 - Review: the owner reviews personally. Do not start an independent reviewer unless the owner asks.
 
 ## NOW
