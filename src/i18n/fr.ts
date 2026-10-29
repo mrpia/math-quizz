@@ -50,6 +50,7 @@ export const fr = {
   'numpad.erase': 'effacer',
   'numpad.validate': 'valider',
   'results.title': 'Bilan',
+  'results.perfect': 'Bravo, aucune erreur !',
   'results.legend': 'Cible : {seconds}s — réponse plus lente : {points} pt',
   'results.slow': 'trop lent',
   'results.wrongAnswerSpoken': '{operation} : tu as répondu {given}, la bonne réponse est {expected}',

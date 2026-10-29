@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { SessionResult, AnswerRecord } from '../domain/session';
-import { outcomeOf, totalScore } from '../domain/scoring';
+import { isPerfect, outcomeOf, totalScore } from '../domain/scoring';
 import type { Outcome } from '../domain/scoring';
 import { formatElapsed, formatPoints, formatSeconds } from '../domain/format';
 import { useI18n } from '../i18n/I18nContext';
@@ -171,6 +171,8 @@ export const ResultsScreen = ({ result, onReplay, onHome }: Props) => {
     partialCreditFactor: result.partialCreditFactor,
   });
 
+  const perfect = isPerfect(scoredAnswers, result.durationPerQuestionMs);
+
   return (
     <div className="results">
       <header className="results__header">
@@ -179,6 +181,12 @@ export const ResultsScreen = ({ result, onReplay, onHome }: Props) => {
           {formatPoints(points)} / {max}
         </div>
       </header>
+
+      {perfect && (
+        <p className="results__trophy" data-testid="results-trophy">
+          <span aria-hidden>🏆</span> {t('results.perfect')}
+        </p>
+      )}
 
       {isPaper ? (
         <PaperResults

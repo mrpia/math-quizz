@@ -137,3 +137,10 @@
   background: transparent;
   cursor: pointer;
 }
+
+.results__trophy {
+  margin: 0;
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+}

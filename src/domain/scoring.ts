@@ -27,6 +27,18 @@ export const outcomeOf = (record: AnswerRecord, targetMs: number): Outcome => {
   return record.elapsedMs <= targetMs ? 'correct' : 'slow';
 };
 
+/**
+ * A test with no mistake: every answer is right. Slow-but-right (🟡) is not a
+ * mistake; a wrong answer or a timeout is. Paper and training records carry the
+ * child's verdict, so `outcomeOf` already judges them. An empty test earns nothing.
+ */
+export const isPerfect = (answers: AnswerRecord[], targetMs: number): boolean =>
+  answers.length > 0 &&
+  answers.every((a) => {
+    const outcome = outcomeOf(a, targetMs);
+    return outcome === 'correct' || outcome === 'slow';
+  });
+
 export const pointsFor = (record: AnswerRecord, settings: ScoringSettings): number => {
   switch (outcomeOf(record, settings.durationPerQuestionMs)) {
     case 'correct':

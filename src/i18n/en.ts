@@ -52,6 +52,7 @@ export const en: Record<TranslationKey, string> = {
   'numpad.erase': 'erase',
   'numpad.validate': 'confirm',
   'results.title': 'Summary',
+  'results.perfect': 'Well done, not a single mistake!',
   'results.legend': 'Target: {seconds}s — slower answer: {points} pt',
   'results.slow': 'too slow',
   'results.wrongAnswerSpoken': '{operation}: you answered {given}, the correct answer is {expected}',
