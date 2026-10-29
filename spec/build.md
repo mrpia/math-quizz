@@ -13,7 +13,7 @@ Status marks are prose only: 🟠 ACTIVE · 🔴 PLANNED · 🟢 PROVEN · ⚪ D
 
 ## NOW
 
-- `FNNN-slug` (ACTIVE): <!-- One clause of outcome plus one clause of the current slice; about forty words. -->
+- `F001-perfect-score-trophy` (ACTIVE): a test with no mistakes shows 🏆 and a congratulation on the results screen; first slice is a failing results-screen test.
 
 ## NEXT
 
