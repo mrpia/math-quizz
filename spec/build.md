@@ -13,7 +13,7 @@ Status marks are prose only: 🟠 ACTIVE · 🔴 PLANNED · 🟢 PROVEN · ⚪ D
 
 ## NOW
 
-- `F001-perfect-score-trophy` (ACTIVE): a test with no mistakes shows 🏆 and a congratulation on the results screen; first slice is a failing results-screen test.
+- `FNNN-slug` (ACTIVE): <!-- One clause of outcome plus one clause of the current slice; about forty words. -->
 
 ## NEXT
 
@@ -21,5 +21,5 @@ Status marks are prose only: 🟠 ACTIVE · 🔴 PLANNED · 🟢 PROVEN · ⚪ D
 
 ## PROVEN
 
-- `FNNN-slug` (PROVEN): <!-- One of at most ten. Landed outcome plus commit and review reference. -->
+- `F001-perfect-score-trophy` (PROVEN): a test with no mistakes shows 🏆 and a congratulation on the results screen; landed `09a754d`, owner-reviewed.
 - <!-- 2026-08: 40 landed. Hosted jobs end themselves; wakes reach the owning session; reviews stop at the ceiling. spec/features/done/2026-08/ -->
