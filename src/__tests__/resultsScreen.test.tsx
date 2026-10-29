@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ResultsScreen } from '../screens/ResultsScreen';
 import type { SessionResult } from '../domain/session';
 import type { Question } from '../domain/question';
+import { renderWithLanguage } from './renderWithLanguage';
 
 const q = (a: number, b: number): Question => ({ a, b, op: 'mul', expected: a * b });
 
@@ -180,5 +181,81 @@ describe('ResultsScreen — partial credit precision (#39)', () => {
     render(<ResultsScreen result={quarter} onReplay={noop} onHome={noop} />);
     expect(screen.getByTestId('results-score')).toHaveTextContent('0.25 / 1');
     expect(screen.getByText(/0\.25 pt/)).toBeInTheDocument();
+  });
+});
+
+describe('ResultsScreen — trophy for a test with no mistake (F001)', () => {
+  const allRight: SessionResult = {
+    ...screenResult,
+    answers: [
+      { question: q(7, 8), given: 56, elapsedMs: 1200 },
+      { question: q(6, 9), given: 54, elapsedMs: 2000 },
+    ],
+  };
+  const trophy = () => screen.queryByTestId('results-trophy');
+  const withAnswers = (base: SessionResult, answers: SessionResult['answers']): SessionResult => ({
+    ...base,
+    answers,
+  });
+
+  test('screen: all correct shows 🏆 and the congratulation', () => {
+    render(<ResultsScreen result={allRight} onReplay={noop} onHome={noop} />);
+    expect(trophy()).toHaveTextContent('🏆');
+    expect(trophy()).toHaveTextContent(/Bravo/);
+  });
+
+  test('screen: one wrong answer shows no trophy', () => {
+    render(<ResultsScreen result={screenResult} onReplay={noop} onHome={noop} />);
+    expect(trophy()).toBeNull();
+    expect(screen.queryByText(/🏆/)).toBeNull();
+  });
+
+  test('screen: one timeout shows no trophy', () => {
+    const timeout = withAnswers(allRight, [
+      allRight.answers[0],
+      { question: q(6, 9), given: null, elapsedMs: 4000 },
+    ]);
+    render(<ResultsScreen result={timeout} onReplay={noop} onHome={noop} />);
+    expect(trophy()).toBeNull();
+  });
+
+  test('screen: a correct but slow answer still earns the trophy', () => {
+    const slow = withAnswers(allRight, [
+      { question: q(7, 8), given: 56, elapsedMs: 9000 },
+      allRight.answers[1],
+    ]);
+    render(<ResultsScreen result={slow} onReplay={noop} onHome={noop} />);
+    expect(screen.getByTestId('results-row-slow')).toBeInTheDocument();
+    expect(trophy()).toHaveTextContent('🏆');
+  });
+
+  test('paper: starts with the trophy; un-marking a row hides it, re-marking restores it', () => {
+    render(<ResultsScreen result={paperResult} onReplay={noop} onHome={noop} />);
+    expect(trophy()).toHaveTextContent('🏆');
+    const row = () => screen.getByRole('button', { name: /7 × 8 = 56/ });
+    fireEvent.click(row());
+    expect(trophy()).toBeNull();
+    fireEvent.click(row());
+    expect(trophy()).toHaveTextContent('🏆');
+  });
+
+  test('training: all self-marked correct shows it, one self-marked wrong hides it', () => {
+    const allMarked = withAnswers(trainingResult, [
+      { question: q(7, 8), given: 56, elapsedMs: 9000, selfMarkedCorrect: true },
+      { question: q(6, 9), given: 54, elapsedMs: 1300, selfMarkedCorrect: true },
+    ]);
+    const { unmount } = render(<ResultsScreen result={allMarked} onReplay={noop} onHome={noop} />);
+    expect(trophy()).toHaveTextContent('🏆');
+    unmount();
+    render(<ResultsScreen result={trainingResult} onReplay={noop} onHome={noop} />);
+    expect(trophy()).toBeNull();
+  });
+
+  test.each([
+    ['de', /Super/],
+    ['en', /Well done/],
+  ] as const)('the congratulation is translated (%s)', (lang, pattern) => {
+    renderWithLanguage(<ResultsScreen result={allRight} onReplay={noop} onHome={noop} />, lang);
+    expect(screen.getByTestId('results-trophy')).toHaveTextContent(pattern);
   });
 });
