@@ -16,5 +16,5 @@
 
 ## Current direction
 
-- This checkout is a local limen trial on branch `limen-trial`. Work lands on `limen-trial` only, never on `main`. No pushes, no GitHub writes (issues, PRs, comments, releases), no `pnpm ship` or other deploy, no version bump.
+- This checkout is a limen trial on branch `limen-trial`. Work lands on `limen-trial` only, never on `main`. Pushing `limen-trial` to `origin` is fine; never push any other branch or tag. No other GitHub writes (issues, PRs, comments, releases), no `pnpm ship` or other deploy, no version bump.
 - Open product work lives in GitHub issues: #15 fill-in-the-blank division, #16 end-of-session sounds and animations, #17 voice mode. Trial tasks may draw on them; the issues stay the backlog of record.
